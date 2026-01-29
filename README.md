@@ -26,8 +26,7 @@ The features_creator.py script generates a comprehensive set of features for mac
 
 ### How It Works
 
-The script reads the 
-anked_database.csv file and creates features by analyzing each team's historical performance **before each match**. For every match in the dataset:
+The script reads the ranked_database.csv file and creates features by analyzing each team's historical performance **before each match**. For every match in the dataset:
 
 1. **Prior Games Analysis**: For both the home and away team, it retrieves all games played **before** the current match date
 2. **Feature Calculation**: It calculates performance metrics from these prior games:
