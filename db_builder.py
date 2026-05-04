@@ -6,14 +6,14 @@ df =  pd.read_csv("data/international_results.csv")
 
 df["date"] = pd.to_datetime(df["date"])
 
-df = df[(df["date"] >= "2023-1-1")].reset_index(drop=True)
+df = df[(df["date"] >= "2018-8-1")].reset_index(drop=True)
 
 rank = pd.read_csv("data/resulting_data.csv")
 
 rank = rank[['rank', 'nation_full_name', 'points', 'rank_date']]
 
 rank["rank_date"] = pd.to_datetime(rank["rank_date"])
-rank = rank[(rank["rank_date"] >= "2023-1-1")].reset_index(drop=True)
+rank = rank[(rank["rank_date"] >= "2018-8-1")].reset_index(drop=True)
 rank["nation_full_name"] = rank["nation_full_name"].str.replace("Czechia", "Czech Republic").str.replace("IR Iran", "Iran").str.replace("Korea Republic", "South Korea").str.replace("USA", "United States")
 
 rank = rank.set_index(['rank_date']).groupby(['nation_full_name'], group_keys=False).resample('D').first().ffill().reset_index()
