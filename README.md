@@ -19,10 +19,10 @@ This executes the following steps in order:
 
 | Step | Script | Input | Output |
 | --- | --- | --- | --- |
-| 1 | `get_data.py` | Kaggle API | `data/international_results.csv` |
-| 2 | `db_builder.py` | `international_results.csv` + `resulting_data.csv` | `data/ranked_database.csv` |
-| 3 | `elo_calculator.py` | `international_results.csv` | `data/elo_ratings.csv` |
-| 4 | `features_creator.py` | `ranked_database.csv` + `elo_ratings.csv` + `resulting_data.csv` | `data/ranked_database_with_features.csv` |
+| 1 | `data_pipeline/get_data.py` | Kaggle API | `data/international_results.csv` |
+| 2 | `data_pipeline/db_builder.py` | `international_results.csv` + `resulting_data.csv` | `data/ranked_database.csv` |
+| 3 | `data_pipeline/elo_calculator.py` | `international_results.csv` | `data/elo_ratings.csv` |
+| 4 | `data_pipeline/features_creator.py` | `ranked_database.csv` + `elo_ratings.csv` + `resulting_data.csv` | `data/ranked_database_with_features.csv` |
 
 ## Features
 
@@ -60,12 +60,17 @@ Implements the [eloratings.net](https://www.eloratings.net) formula:
 
 ```text
 wc_26_ml/
-├── pipeline.py              # Full pipeline entry point
-├── get_data.py              # Downloads match history from Kaggle
-├── db_builder.py            # Merges matches with FIFA rankings
-├── elo_calculator.py        # Computes ELO ratings
-├── features_creator.py      # Engineers all model features
+├── pipeline.py              # Master orchestrator — runs all sub-pipelines
 ├── features.md              # Feature documentation
+├── data_pipeline/           # Builds the source features dataset
+│   ├── pipeline.py          # Data sub-pipeline (called by root pipeline.py)
+│   ├── get_data.py          # Downloads match history from Kaggle
+│   ├── db_builder.py        # Merges matches with FIFA rankings
+│   ├── elo_calculator.py    # Computes ELO ratings
+│   ├── features_creator.py  # Engineers all model features
+│   └── validate_features.py # Sanity-checks computed features against raw data
+├── models/                  # One subfolder per model (future)
+├── backtest/                # Evaluation against WC 2022 (future)
 └── data/
     ├── international_results.csv
     ├── resulting_data.csv
