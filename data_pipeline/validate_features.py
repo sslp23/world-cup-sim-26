@@ -37,29 +37,29 @@ def calc_points_won(team_score, opp_score):
     return 0
 
 
-def get_team_games_before_date(raw_df, team, date):
+def get_team_games_before_date(raw_df, team, date, q90_map):
     """Recomputes the same game history used by features_creator._get_team_games_before_date."""
     keep = ['date', 'points_won', 'points_weighted', 'goals', 'goals_suffered',
             'goals_weighted', 'goals_suffered_weighted', 'goal_diff']
 
     home = raw_df[(raw_df['home_team'] == team) & (raw_df['date'] < date)].copy()
-    home['tw'] = home['tournament'].apply(get_tournament_weight)
+    home['q90'] = home['date'].map(q90_map)
     home['points_won'] = home.apply(lambda r: calc_points_won(r['home_score'], r['away_score']), axis=1)
-    home['points_weighted'] = home['points_won'] * (home['points_away'] / 1000) * home['tw']
+    home['points_weighted'] = home['points_won'] * (home['points_away'] / home['q90'])
     home['goals'] = home['home_score']
     home['goals_suffered'] = home['away_score']
-    home['goals_weighted'] = home['goals'] * (home['points_away'] / 1000) * home['tw']
-    home['goals_suffered_weighted'] = home['goals_suffered'] * (home['points_away'] / 1000) * home['tw']
+    home['goals_weighted'] = home['goals'] * (home['points_away'] / home['q90'])
+    home['goals_suffered_weighted'] = home['goals_suffered'] / (home['points_away'] / home['q90'])
     home['goal_diff'] = home['goals'] - home['goals_suffered']
 
     away = raw_df[(raw_df['away_team'] == team) & (raw_df['date'] < date)].copy()
-    away['tw'] = away['tournament'].apply(get_tournament_weight)
+    away['q90'] = away['date'].map(q90_map)
     away['points_won'] = away.apply(lambda r: calc_points_won(r['away_score'], r['home_score']), axis=1)
-    away['points_weighted'] = away['points_won'] * (away['points_home'] / 1000) * away['tw']
+    away['points_weighted'] = away['points_won'] * (away['points_home'] / away['q90'])
     away['goals'] = away['away_score']
     away['goals_suffered'] = away['home_score']
-    away['goals_weighted'] = away['goals'] * (away['points_home'] / 1000) * away['tw']
-    away['goals_suffered_weighted'] = away['goals_suffered'] * (away['points_home'] / 1000) * away['tw']
+    away['goals_weighted'] = away['goals'] * (away['points_home'] / away['q90'])
+    away['goals_suffered_weighted'] = away['goals_suffered'] / (away['points_home'] / away['q90'])
     away['goal_diff'] = away['goals'] - away['goals_suffered']
 
     games = pd.concat([home[keep], away[keep]], ignore_index=True)
@@ -124,7 +124,7 @@ def check(label, expected, actual, results):
 
 # ── Main validation ───────────────────────────────────────────────────────────
 
-def validate_team(team, raw_df, feat_df, elo_df, conf_map):
+def validate_team(team, raw_df, feat_df, elo_df, conf_map, q90_map):
     print(f"\n{'=' * 70}")
     print(f"  Team: {team}")
     print(f"{'=' * 70}")
@@ -137,7 +137,7 @@ def validate_team(team, raw_df, feat_df, elo_df, conf_map):
 
     chosen = None
     for _, row in appearances.iterrows():
-        prior = get_team_games_before_date(raw_df, team, row['date'])
+        prior = get_team_games_before_date(raw_df, team, row['date'], q90_map)
         if len(prior) >= MIN_PRIOR_GAMES:
             chosen = row
             break
@@ -171,8 +171,9 @@ def validate_team(team, raw_df, feat_df, elo_df, conf_map):
     exp_tw = get_tournament_weight(chosen['tournament'])
     check('tournament_weight', exp_tw, chosen['tournament_weight'], results)
 
-    # Points weighted
-    exp_pwt = exp_pw * (opp_points / 1000) * exp_tw
+    # Points weighted — normalised by q90 of points at match date
+    q90 = chosen['points_q90']
+    exp_pwt = exp_pw * (opp_points / q90)
     check(f'{prefix}points_weighted', exp_pwt, chosen[f'{prefix}points_weighted'], results)
 
     # Points dif
@@ -200,7 +201,7 @@ def validate_team(team, raw_df, feat_df, elo_df, conf_map):
 
     # ── Rolling features ──────────────────────────────────────────────────────
     print()
-    prior_games = get_team_games_before_date(raw_df, team, chosen['date'])
+    prior_games = get_team_games_before_date(raw_df, team, chosen['date'], q90_map)
     exp_rolling = rolling_features(prior_games)
 
     for metric, exp_val in exp_rolling.items():

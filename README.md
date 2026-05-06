@@ -38,10 +38,10 @@ See [features.md](features.md) for full documentation of all engineered features
 - `confederation_home` / `confederation_away` — football confederation per team
 - `neutral` / `tournament` — carried through from source data
 
-#### Rolling (per team, last 5 and 3 games, leak-free)
+#### Rolling (per team, last 20, 10, 5 and 3 games, leak-free)
 
 - `points_won_ma` — average points earned
-- `points_weighted_ma` — points weighted by opponent FIFA points × tournament weight
+- `points_weighted_ma` — points weighted by opponent FIFA points (normalized by 1400)
 - `goals_ma` / `goals_suffered_ma` — goals scored and conceded
 - `goals_weighted_ma` / `goals_suffered_weighted_ma` — goals weighted by opponent strength
 - `goal_diff_ma` — average goal difference

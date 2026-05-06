@@ -25,7 +25,7 @@
 ### Points
 
 - `home_points_won` / `away_points_won` — Points earned in the match (3=win, 1=draw, 0=loss)
-- `home_points_weighted` / `away_points_weighted` — Points scaled by opponent FIFA points and tournament weight: `points_won × (opponent_points / 1000) × tournament_weight`. Results against stronger opponents in more important matches earn more credit.
+- `home_points_weighted` / `away_points_weighted` — Points scaled by opponent FIFA points: `points_won × (opponent_points / 1400)`. Results against stronger opponents earn more credit.
 
 ### Strength Differential
 
@@ -35,7 +35,7 @@
 
 - `tournament` — Carried through from source data; used to derive `tournament_weight`.
 - `neutral` — Carried through from source data; used in ELO home advantage calculation.
-- `tournament_weight` — Competition importance weight applied to all weighted rolling metrics:
+- `tournament_weight` — Competition importance weight:
 
   | Tournament type | Weight |
   | --- | --- |
@@ -65,25 +65,24 @@ ELO ratings are pre-computed by `elo_calculator.py` from the full match history 
 
 ## Rolling/Moving Average Features (per team, computed from prior games only)
 
-Each feature is computed for both `home_` and `away_` teams, using their last **5** and **3** games before the match date.
+Each feature is computed for both `home_` and `away_` teams, using their last **20**, **10**, **5** and **3** games before the match date.
 
 ### Key design choices
 
 - All moving averages are **leak-free** — only games strictly before the match date are used.
 - Home and away games are **combined** into a single timeline per team (not separated), so form reflects all recent results regardless of venue.
-- Opponent weighting uses FIFA **points** (not rank): `× (opponent_points / 1000)`. Higher opponent points = stronger opponent = more weight.
-- Tournament weight is applied to all weighted metrics so results in friendlies are discounted relative to competitive games.
+- Opponent weighting uses FIFA **points** (not rank): `× (opponent_points / 1400)`. Higher opponent points = stronger opponent = more weight.
 
 ### Feature table
 
 | Base metric | Description |
 | --- | --- |
-| `points_won_ma_5` / `_ma_3` | Avg points earned in last 5/3 games |
-| `points_weighted_ma_5` / `_ma_3` | Avg points weighted by opponent FIFA points × tournament weight |
-| `goals_ma_5` / `_ma_3` | Avg goals scored in last 5/3 games |
-| `goals_suffered_ma_5` / `_ma_3` | Avg goals conceded in last 5/3 games |
-| `goals_weighted_ma_5` / `_ma_3` | Avg goals scored weighted by opponent strength |
-| `goals_suffered_weighted_ma_5` / `_ma_3` | Avg goals conceded weighted by opponent strength |
-| `goal_diff_ma_5` / `_ma_3` | Avg goal difference (scored − conceded) in last 5/3 games |
+| `points_won_ma_X` | Avg points earned in last X games |
+| `points_weighted_ma_X` | Avg points weighted by opponent FIFA points |
+| `goals_ma_X` | Avg goals scored in last X games |
+| `goals_suffered_ma_X` | Avg goals conceded in last X games |
+| `goals_weighted_ma_X` | Avg goals scored weighted by opponent strength |
+| `goals_suffered_weighted_ma_X` | Avg goals conceded weighted by opponent strength |
+| `goal_diff_ma_X` | Avg goal difference (scored − conceded) in last X games |
 | `form_trend_5` / `_form_trend_3` | Linear slope of `points_won` over last 5/3 games. Positive = improving form, negative = declining. Captures trajectory that identical MAs would mask (e.g. W-W-W after L-L vs L-L after W-W-W). |
 | `days_since_last_match` | Days between the current match and the team's previous game. Captures fatigue and match rhythm. |

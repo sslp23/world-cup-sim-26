@@ -78,15 +78,16 @@ class FeaturesCreator:
         )
 
         # ==================== TOURNAMENT WEIGHT ====================
-        # Used as a static feature and to weight rolling metrics.
+        # Kept as a static feature only. No longer applied to weighted metrics.
         # neutral and tournament columns are carried through from the source data.
         df['tournament_weight'] = df['tournament'].apply(self._get_tournament_weight)
 
         # ==================== WEIGHTED POINTS (BY OPPONENT FIFA POINTS) ====================
-        # Opponent FIFA points (higher = stronger). Divide by 1000 as reference scale.
+        # Normalised by a static value (1400).
         # Results against stronger opponents earn proportionally more credit.
-        df['home_points_weighted'] = df['home_points_won'] * (df['points_away'] / 1000) * df['tournament_weight']
-        df['away_points_weighted'] = df['away_points_won'] * (df['points_home'] / 1000) * df['tournament_weight']
+        norm_val = 1400.0
+        df['home_points_weighted'] = df['home_points_won'] * (df['points_away'] / norm_val)
+        df['away_points_weighted'] = df['away_points_won'] * (df['points_home'] / norm_val)
 
         # ==================== POINTS DIFFERENCE ====================
         # Positive = home team is stronger (more FIFA points). Replaces rank_dif.
@@ -146,13 +147,13 @@ class FeaturesCreator:
         features = {}
 
         nan_features = [
-            'points_won_ma_5', 'points_won_ma_3',
-            'points_weighted_ma_5', 'points_weighted_ma_3',
-            'goals_ma_5', 'goals_ma_3',
-            'goals_suffered_ma_5', 'goals_suffered_ma_3',
-            'goals_weighted_ma_5', 'goals_weighted_ma_3',
-            'goals_suffered_weighted_ma_5', 'goals_suffered_weighted_ma_3',
-            'goal_diff_ma_5', 'goal_diff_ma_3',
+            'points_won_ma_20', 'points_won_ma_10', 'points_won_ma_5', 'points_won_ma_3',
+            'points_weighted_ma_20', 'points_weighted_ma_10', 'points_weighted_ma_5', 'points_weighted_ma_3',
+            'goals_ma_20', 'goals_ma_10', 'goals_ma_5', 'goals_ma_3',
+            'goals_suffered_ma_20', 'goals_suffered_ma_10', 'goals_suffered_ma_5', 'goals_suffered_ma_3',
+            'goals_weighted_ma_20', 'goals_weighted_ma_10', 'goals_weighted_ma_5', 'goals_weighted_ma_3',
+            'goals_suffered_weighted_ma_20', 'goals_suffered_weighted_ma_10', 'goals_suffered_weighted_ma_5', 'goals_suffered_weighted_ma_3',
+            'goal_diff_ma_20', 'goal_diff_ma_10', 'goal_diff_ma_5', 'goal_diff_ma_3',
             'form_trend_5', 'form_trend_3',
             'days_since_last_match',
         ]
@@ -170,21 +171,16 @@ class FeaturesCreator:
         goals_suffered_weighted = team_games['goals_suffered_weighted'].values
         goal_diff = team_games['goal_diff'].values
 
-        # Moving averages — last 5 and last 3 games
-        features['points_won_ma_5'] = np.mean(points_won[-5:])
-        features['points_won_ma_3'] = np.mean(points_won[-3:])
-        features['points_weighted_ma_5'] = np.mean(points_weighted[-5:])
-        features['points_weighted_ma_3'] = np.mean(points_weighted[-3:])
-        features['goals_ma_5'] = np.mean(goals[-5:])
-        features['goals_ma_3'] = np.mean(goals[-3:])
-        features['goals_suffered_ma_5'] = np.mean(goals_suffered[-5:])
-        features['goals_suffered_ma_3'] = np.mean(goals_suffered[-3:])
-        features['goals_weighted_ma_5'] = np.mean(goals_weighted[-5:])
-        features['goals_weighted_ma_3'] = np.mean(goals_weighted[-3:])
-        features['goals_suffered_weighted_ma_5'] = np.mean(goals_suffered_weighted[-5:])
-        features['goals_suffered_weighted_ma_3'] = np.mean(goals_suffered_weighted[-3:])
-        features['goal_diff_ma_5'] = np.mean(goal_diff[-5:])
-        features['goal_diff_ma_3'] = np.mean(goal_diff[-3:])
+        # Moving averages — last 20, 10, 5 and last 3 games
+        windows = [20, 10, 5, 3]
+        for w in windows:
+            features[f'points_won_ma_{w}'] = np.mean(points_won[-w:])
+            features[f'points_weighted_ma_{w}'] = np.mean(points_weighted[-w:])
+            features[f'goals_ma_{w}'] = np.mean(goals[-w:])
+            features[f'goals_suffered_ma_{w}'] = np.mean(goals_suffered[-w:])
+            features[f'goals_weighted_ma_{w}'] = np.mean(goals_weighted[-w:])
+            features[f'goals_suffered_weighted_ma_{w}'] = np.mean(goals_suffered_weighted[-w:])
+            features[f'goal_diff_ma_{w}'] = np.mean(goal_diff[-w:])
 
         # Form trend — linear slope of points_won over recent games.
         # Positive = improving, negative = declining.
@@ -203,22 +199,28 @@ class FeaturesCreator:
     def _get_team_games_before_date(self, df, team, current_date):
         """
         Get all games for a team before current_date with computed per-game metrics.
-        Opponent weighting uses FIFA points (higher = stronger opponent = more credit).
-        Tournament weight is applied to all weighted metrics.
+
+        Weighting logic:
+          - goals_weighted: multiplied by (opponent_points / 1400) — scoring vs stronger teams counts more
+          - goals_suffered_weighted: divided by (opponent_points / 1400) — conceding vs stronger teams counts less
         """
         keep_cols = ['date', 'points_won', 'points_weighted', 'goals', 'goals_suffered',
                      'goals_weighted', 'goals_suffered_weighted', 'goal_diff']
+
+        norm_val = 1400.0
 
         # Home games (team is home, opponent is away)
         home = df[(df['home_team'] == team) & (df['date'] < current_date)].copy()
         home['points_won'] = home.apply(
             lambda r: self.calculate_points_won(r['home_score'], r['away_score']), axis=1
         )
-        home['points_weighted'] = home['points_won'] * (home['points_away'] / 1000) * home['tournament_weight']
+        home['points_weighted'] = home['points_won'] * (home['points_away'] / norm_val)
         home['goals'] = home['home_score']
         home['goals_suffered'] = home['away_score']
-        home['goals_weighted'] = home['goals'] * (home['points_away'] / 1000) * home['tournament_weight']
-        home['goals_suffered_weighted'] = home['goals_suffered'] * (home['points_away'] / 1000) * home['tournament_weight']
+        # Goals scored weighted UP by opponent strength — scoring vs strong teams is worth more
+        home['goals_weighted'] = home['goals'] * (home['points_away'] / norm_val)
+        # Goals conceded weighted DOWN by opponent strength — conceding vs strong teams is less bad
+        home['goals_suffered_weighted'] = home['goals_suffered'] / (home['points_away'] / norm_val)
         home['goal_diff'] = home['goals'] - home['goals_suffered']
 
         # Away games (team is away, opponent is home)
@@ -226,11 +228,13 @@ class FeaturesCreator:
         away['points_won'] = away.apply(
             lambda r: self.calculate_points_won(r['away_score'], r['home_score']), axis=1
         )
-        away['points_weighted'] = away['points_won'] * (away['points_home'] / 1000) * away['tournament_weight']
+        away['points_weighted'] = away['points_won'] * (away['points_home'] / norm_val)
         away['goals'] = away['away_score']
         away['goals_suffered'] = away['home_score']
-        away['goals_weighted'] = away['goals'] * (away['points_home'] / 1000) * away['tournament_weight']
-        away['goals_suffered_weighted'] = away['goals_suffered'] * (away['points_home'] / 1000) * away['tournament_weight']
+        # Goals scored weighted UP by opponent strength
+        away['goals_weighted'] = away['goals'] * (away['points_home'] / norm_val)
+        # Goals conceded weighted DOWN by opponent strength
+        away['goals_suffered_weighted'] = away['goals_suffered'] / (away['points_home'] / norm_val)
         away['goal_diff'] = away['goals'] - away['goals_suffered']
 
         team_games = pd.concat([home[keep_cols], away[keep_cols]], ignore_index=True)
