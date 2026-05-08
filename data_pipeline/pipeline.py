@@ -2,10 +2,11 @@
 Data pipeline — builds the full features dataset from scratch.
 
 Steps:
-  1. get_data         — download match history from Kaggle
-  2. db_builder       — merge match history with FIFA rankings
-  3. elo_calculator   — compute ELO ratings from full match history
-  4. features_creator — build all model features
+  1. get_data              — download match history from Kaggle
+  2. db_builder            — merge match history with FIFA rankings
+  3. elo_calculator        — compute ELO ratings from full match history
+  4. pi_ratings_calculator — compute pi-ratings from full match history
+  5. features_creator      — build all model features
 """
 
 import os
@@ -13,6 +14,7 @@ import pandas as pd
 import kagglehub
 
 from .elo_calculator import compute_elo
+from .pi_ratings_calculator import compute_pi_ratings
 from .features_creator import FeaturesCreator
 
 
@@ -67,13 +69,24 @@ def run():
     for team, elo_val in top_teams:
         print(f"  {team}: {elo_val:.0f}")
 
-    # ── Step 4: Feature engineering ───────────────────────────────────────────
-    print("\n=== Step 4: Creating features ===")
+    # ── Step 4: Pi-ratings ────────────────────────────────────────────────────
+    print("\n=== Step 4: Computing pi-ratings ===")
+    pi_df, final_pi = compute_pi_ratings(results_full)
+    pi_df.to_csv("data/pi_ratings.csv", index=False)
+    print(f"Pi-ratings saved: {len(pi_df)} matches processed")
+
+    top_pi = sorted(final_pi.items(), key=lambda x: (x[1]['pi_h'] + x[1]['pi_a']) / 2, reverse=True)[:10]
+    print("Top 10 teams by average pi-rating:")
+    for team, r in top_pi:
+        print(f"  {team}: avg={(r['pi_h'] + r['pi_a']) / 2:+.3f}  pi_h={r['pi_h']:+.3f}  pi_a={r['pi_a']:+.3f}")
+
+    # ── Step 5: Feature engineering ───────────────────────────────────────────
+    print("\n=== Step 5: Creating features ===")
     creator = FeaturesCreator(
         csv_path="data/ranked_database.csv",
         conf_path="data/resulting_data.csv",
     )
-    df_features = creator.create_all_features(elo_df=elo_df)
+    df_features = creator.create_all_features(elo_df=elo_df, pi_df=pi_df)
 
     output_path = "data/ranked_database_with_features.csv"
     creator.save_to_csv(output_path)
