@@ -1,0 +1,72 @@
+# XGBoost Model
+
+A gradient-boosted classifier for 3-class football outcome prediction (home_win / draw / away_win), designed specifically for neutral-venue tournament prediction.
+
+## Design Decisions
+
+### 1. Difference features
+
+All features are expressed as `home_team_value − away_team_value`. This is the natural representation for a symmetric quality comparison and avoids giving any signal to whichever team happens to be labelled "home" in a neutral venue match. See [eda/README.md](../../eda/README.md) for the feature selection rationale.
+
+### 2. Augmented training (flip augmentation)
+
+Every match in the training set is included twice:
+- **Forward**: original features + original outcome
+- **Flipped**: negated features + swapped outcome (home_win ↔ away_win, draw stays draw)
+
+Negating all difference features is equivalent to swapping the two teams. This forces the model to learn symmetric quality differences, making it neutral-venue aware without discarding any training data.
+
+### 3. Symmetrized inference
+
+At prediction time, each match is predicted twice — forward and with teams swapped (features negated) — and the results are averaged:
+
+```
+P(team_A wins) = (P(home_win | forward) + P(away_win | inverted)) / 2
+P(draw)        = (P(draw | forward)     + P(draw | inverted))     / 2
+P(team_B wins) = (P(away_win | forward) + P(home_win | inverted)) / 2
+```
+
+Together with augmented training, this ensures predictions are fully invariant to which team is arbitrarily labelled "home" in the input data.
+
+### 4. Draw class weighting
+
+Draws (≈23% of outcomes) are underrepresented relative to home wins (≈49%) and away wins (≈29%). Without correction, XGBoost rarely predicts draws.
+
+Class weights are set inversely proportional to class frequency in the augmented training set, then multiplied by a tunable `draw_weight` parameter:
+
+| `draw_weight` | Draw class weight | Effect |
+| --- | --- | --- |
+| 0.0 | 0.00 | Never predicts draws |
+| 0.75 | 1.10 | **Selected** — best accuracy + RPS trade-off |
+| 1.0 | 1.47 | Full inverse-frequency compensation — over-predicts draws |
+
+`draw_weight = 0.75` was tuned on the WC 2022 backtest.
+
+## Feature Set
+
+See [features.md](../../features.md#model-feature-selection) for the full description. Summary:
+
+| Group | Features |
+| --- | --- |
+| Ratings | `points_dif`, `elo_diff`, `pi_diff` |
+| Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
+| Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |
+| Weighted goals suffered | `gsw_ma20_diff`, `gsw_ma5_diff` |
+| Goal difference | `gd_ma20_diff`, `gd_ma5_diff` |
+
+`neutral` is excluded — the model is designed for neutral-venue prediction and augmentation/symmetrization handle venue invariance.
+
+## Files
+
+| File | Description |
+| --- | --- |
+| `model.py` | `XGBoostPredictor` class |
+| `backtest.py` | WC 2022 backtest — trains and evaluates on 64 matches |
+| `tune_draw_weight.py` | Sweeps `draw_weight` values to find the optimal trade-off |
+| `wc2022_backtest_results.csv` | Per-match backtest results |
+
+## WC 2022 Results
+
+Accuracy: **56.2% (36/64)** — Log-Loss: **1.090** — RPS: **0.214**
+
+See [models/README.md](../README.md) for comparison with Dixon-Coles.

@@ -22,11 +22,14 @@ This executes the following steps in order:
 | 1 | `data_pipeline/get_data.py` | Kaggle API | `data/international_results.csv` |
 | 2 | `data_pipeline/db_builder.py` | `international_results.csv` + `resulting_data.csv` | `data/ranked_database.csv` |
 | 3 | `data_pipeline/elo_calculator.py` | `international_results.csv` | `data/elo_ratings.csv` |
-| 4 | `data_pipeline/features_creator.py` | `ranked_database.csv` + `elo_ratings.csv` + `resulting_data.csv` | `data/ranked_database_with_features.csv` |
+| 4 | `data_pipeline/pi_ratings_calculator.py` | `international_results.csv` | `data/pi_ratings.csv` |
+| 5 | `data_pipeline/features_creator.py` | `ranked_database.csv` + `elo_ratings.csv` + `pi_ratings.csv` + `resulting_data.csv` | `data/ranked_database_with_features.csv` |
 
-## Features
+## Features & EDA
 
-See [features.md](features.md) for full documentation of all engineered features.
+See [features.md](features.md) for full documentation of all engineered features and the selected model feature set.
+
+See [eda/README.md](eda/README.md) for the exploratory data analysis — feature predictiveness, multicollinearity findings, and the rationale behind feature selection.
 
 ### Summary
 
@@ -61,20 +64,27 @@ Implements the [eloratings.net](https://www.eloratings.net) formula:
 ```text
 wc_26_ml/
 ├── pipeline.py              # Master orchestrator — runs all sub-pipelines
-├── features.md              # Feature documentation
+├── features.md              # Feature documentation and model feature selection
 ├── data_pipeline/           # Builds the source features dataset
 │   ├── pipeline.py          # Data sub-pipeline (called by root pipeline.py)
 │   ├── get_data.py          # Downloads match history from Kaggle
 │   ├── db_builder.py        # Merges matches with FIFA rankings
 │   ├── elo_calculator.py    # Computes ELO ratings
+│   ├── pi_ratings_calculator.py  # Computes pi-ratings (Constantinou & Fenton)
 │   ├── features_creator.py  # Engineers all model features
 │   └── validate_features.py # Sanity-checks computed features against raw data
-├── models/                  # One subfolder per model (future)
-├── backtest/                # Evaluation against WC 2022 (future)
+├── eda/                     # Exploratory data analysis
+│   ├── README.md            # EDA findings and feature selection rationale
+│   └── feature_analysis.py  # Feature predictiveness and multicollinearity analysis
+├── models/                  # One subfolder per model
+│   ├── README.md            # Model comparison and WC 2022 backtest results
+│   ├── dixon_coles/         # Dixon-Coles Poisson model
+│   └── xgboost/             # XGBoost 3-class classifier
 └── data/
     ├── international_results.csv
     ├── resulting_data.csv
     ├── ranked_database.csv
     ├── elo_ratings.csv
+    ├── pi_ratings.csv
     └── ranked_database_with_features.csv
 ```

@@ -86,3 +86,76 @@ Each feature is computed for both `home_` and `away_` teams, using their last **
 | `goal_diff_ma_X` | Avg goal difference (scored − conceded) in last X games |
 | `form_trend_5` / `_form_trend_3` | Linear slope of `points_won` over last 5/3 games. Positive = improving form, negative = declining. Captures trajectory that identical MAs would mask (e.g. W-W-W after L-L vs L-L after W-W-W). |
 | `days_since_last_match` | Days between the current match and the team's previous game. Captures fatigue and match rhythm. |
+
+---
+
+## Model Feature Selection
+
+Selected based on the EDA in [`eda/README.md`](eda/README.md). All features are expressed as **difference features** (home team value − away team value) to be invariant to arbitrary home/away assignment at neutral venues (e.g. World Cup).
+
+### Logical structure
+
+The selected feature set follows a consistent pattern: one **long-window** (last 20 games, captures true level) and one **short-window** (last 5 games, captures recent form) per metric group.
+
+#### Rating features
+
+Pre-computed ratings that summarise overall team quality. The three systems are complementary — FIFA points reflect official rankings, ELO captures head-to-head results history, and pi-ratings track goal difference dynamics.
+
+| Feature | Description |
+| --- | --- |
+| `points_dif` | FIFA ranking points difference (`points_home − points_away`) |
+| `elo_diff` | ELO rating difference (`home_elo − away_elo`) |
+| `pi_diff` | Pi-rating expected goal diff (`pi_h_home − pi_a_away`); positive = home team favoured |
+
+#### Weighted points won
+
+Measures which team has been earning more points recently, adjusted for opponent strength (results against stronger sides count more).
+
+| Feature | Description |
+| --- | --- |
+| `pww_ma20_diff` | Difference of each team's weighted points won average over last 20 games |
+| `pww_ma5_diff` | Difference of each team's weighted points won average over last 5 games |
+
+#### Weighted goals scored
+
+Measures attacking output, weighted up by opponent strength — scoring against a top side is worth more than scoring against a weaker one.
+
+| Feature | Description |
+| --- | --- |
+| `gw_ma20_diff` | Difference of each team's weighted goals scored average over last 20 games |
+| `gw_ma5_diff` | Difference of each team's weighted goals scored average over last 5 games |
+
+#### Weighted goals suffered
+
+Measures defensive solidity, weighted down by opponent strength — conceding against a top side is penalised less than conceding against a weaker one.
+
+| Feature | Description |
+| --- | --- |
+| `gsw_ma20_diff` | Difference of each team's weighted goals conceded average over last 20 games |
+| `gsw_ma5_diff` | Difference of each team's weighted goals conceded average over last 5 games |
+
+#### Goal difference
+
+Captures net dominance (attack minus defence combined) for each team. This is distinct from the goals scored and goals suffered features above: while those measure each dimension independently, goal difference reflects overall match control.
+
+| Feature | Description |
+| --- | --- |
+| `gd_ma20_diff` | Difference of each team's average goal difference over last 20 games |
+| `gd_ma5_diff` | Difference of each team's average goal difference over last 5 games |
+
+#### Context
+
+| Feature | Description |
+| --- | --- |
+| `neutral` | Whether the match is at a neutral venue (1/0). Reduces implicit home advantage signal. |
+
+### Excluded features
+
+| Feature group | Reason for exclusion |
+| --- | --- |
+| Raw (non-weighted) goals / points won | Pearson r ≈ 0.97 with weighted equivalents; weighted version subsumes them |
+| `form_trend_5` / `form_trend_3` | Near-zero mutual information; no predictive power |
+| `days_since_last_match` | Near-zero mutual information at the dataset level |
+| `tournament_weight` | No predictive power on its own |
+| `confederation_home` / `confederation_away` | Very small effect (Cramér's V ≈ 0.07–0.09); information already encoded in rating features |
+| Windows ma_10 / ma_3 | Highly correlated with ma_20/ma_5 (r > 0.86); keeping two windows is sufficient |
