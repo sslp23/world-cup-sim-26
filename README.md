@@ -79,7 +79,10 @@ wc_26_ml/
 ├── models/                  # One subfolder per model
 │   ├── README.md            # Model comparison and WC 2022 backtest results
 │   ├── dixon_coles/         # Dixon-Coles Poisson model
-│   └── xgboost/             # XGBoost 3-class classifier
+│   ├── xgboost/             # XGBoost 3-class classifier
+│   ├── catboost/            # CatBoost 3-class classifier (best overall)
+│   ├── ordered_logit/       # Ordered logistic regression (3-feature baseline)
+│   └── ml_poisson/          # ML-Poisson hybrid (XGBoost regressor + Dixon-Coles matrix)
 └── data/
     ├── international_results.csv
     ├── resulting_data.csv
