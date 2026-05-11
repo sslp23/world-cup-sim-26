@@ -45,6 +45,9 @@ def run():
         .str.replace("IR Iran", "Iran")
         .str.replace("Korea Republic", "South Korea")
         .str.replace("USA", "United States")
+        .str.replace("Bosnia-Herzegovina", "Bosnia and Herzegovina")
+        .str.replace("Turkiye", "Turkey")
+        .str.replace("China", "China PR", regex=False)
     )
 
     rank = rank.set_index(['rank_date']).groupby(['nation_full_name'], group_keys=False).resample('D').first().ffill().reset_index()

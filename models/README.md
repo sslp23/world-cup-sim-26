@@ -18,28 +18,30 @@ Baseline (uniform 1/3 probabilities): Log-Loss = 1.099, RPS = 0.239.
 
 | Model | Accuracy | Log-Loss | RPS |
 | --- | --- | --- | --- |
-| **CatBoost** | **57.8% (37/64)** | 1.038 | **0.212** |
-| XGBoost | 56.2% (36/64) | 1.090 | 0.214 |
-| ML-Poisson | 56.2% (36/64) | 1.058 | 0.215 |
-| Ordered Logit | 53.1% (34/64) | **1.031** | 0.214 |
-| Dixon-Coles | 53.1% (34/64) | 1.040 | 0.213 |
+| **CatBoost** | **56.2% (36/64)** | 1.055 | **0.217** |
+| Ordered Logit | 53.1% (34/64) | **1.030** | **0.214** |
+| ML-Poisson | 53.1% (34/64) | 1.054 | 0.217 |
+| Ensemble (XGB+CB+MLP) | 53.1% (34/64) | 1.050 | 0.214 |
+| Dixon-Coles | 50.0% (32/64) | 1.045 | 0.214 |
+| XGBoost | 50.0% (32/64) | 1.077 | 0.217 |
+
+Training set: 3,669 ranked matches (2018-07-16 → 2022-11-19). Name normalisations applied: Bosnia-Herzegovina, Turkiye, China → added ~135 previously unmatched matches.
 
 ### By stage
 
-| Stage | Dixon-Coles | Ord. Logit | XGBoost | CatBoost | ML-Poisson |
-| --- | --- | --- | --- | --- | --- |
-| Group stage (48) | 52.1% (25/48) | 52.1% (25/48) | 52.1% (25/48) | **56.2% (27/48)** | 54.2% (26/48) |
-| Round of 16 (8) | 75.0% (6/8) | 75.0% (6/8) | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** |
-| Quarter-finals (4) | 0.0% (0/4) | 0.0% (0/4) | 25.0% (1/4) | 25.0% (1/4) | 25.0% (1/4) |
-| Semi-finals (2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) |
-| Final / 3rd place (2) | 50.0% (1/2) | 50.0% (1/2) | 50.0% (1/2) | 0.0% (0/2) | 0.0% (0/2) |
+| Stage | Dixon-Coles | Ord. Logit | XGBoost | CatBoost | ML-Poisson | Ensemble |
+| --- | --- | --- | --- | --- | --- | --- |
+| Group stage (48) | 47.9% (23/48) | 52.1% (25/48) | 45.8% (22/48) | **52.1% (25/48)** | 50.0% (24/48) | 50.0% (24/48) |
+| Round of 16 (8) | 75.0% (6/8) | 75.0% (6/8) | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** |
+| Quarter-finals (4) | 0.0% (0/4) | 0.0% (0/4) | 25.0% (1/4) | 25.0% (1/4) | 25.0% (1/4) | 25.0% (1/4) |
+| Semi-finals (2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) |
+| Final / 3rd place (2) | 50.0% (1/2) | 50.0% (1/2) | 0.0% (0/2) | 50.0% (1/2) | 0.0% (0/2) | 0.0% (0/2) |
 
 **Takeaways:**
 
-- CatBoost is the best overall model — best accuracy (+4.7pp over Dixon-Coles) and best RPS. Adding confederation as a native categorical feature contributes meaningful signal.
+- CatBoost remains the best overall model on accuracy. Adding confederation as a native categorical feature contributes meaningful signal, especially for correctly handling newly included teams (Turkey, Bosnia, China PR).
 - Ordered Logit achieves the best Log-Loss with only 3 features and 5 parameters, confirming that the bulk of predictive signal lives in the rating features (ELO, pi-ratings, FIFA points). Pi-ratings carry the most weight (coef +0.29 vs +0.004 for ELO).
-- XGBoost, CatBoost, and ML-Poisson all outperform the simpler models in the Round of 16 (7/8 vs 6/8), suggesting the form features and non-linear interactions add value in knockout-stage matchups.
-- ML-Poisson ties XGBoost on accuracy (56.2%) with a lower Log-Loss (1.058 vs 1.090). Its explicit score distribution model produces better-calibrated probabilities than the classifier.
+- XGBoost, CatBoost, ML-Poisson and the Ensemble all reach 87.5% in the Round of 16, suggesting form features and non-linear interactions add value in knockout-stage matchups.
 - All models are equally weak in the Quarter-finals — top-vs-top knockout matches are inherently hard to predict from pre-match features.
 - Group stage upsets (Saudi Arabia, Japan, Morocco, Cameroon) are not predictable from any model.
 
@@ -147,6 +149,18 @@ See [`catboost/README.md`](catboost/README.md) for design details.
 
 **Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.
 
-**Strengths:** Best overall performer. Handles categorical confederation features natively without one-hot encoding, which avoids information loss and reduces the risk of overfitting sparse dummy variables.
+**Strengths:** Best overall performer on accuracy. Handles categorical confederation features natively without one-hot encoding, which avoids information loss and reduces the risk of overfitting sparse dummy variables.
 
 **Limitations:** Black-box. Does not model score distributions, only outcome probabilities.
+
+---
+
+### Ensemble (XGBoost + CatBoost + ML-Poisson)
+
+[`ensemble/`](ensemble/)
+
+Equal-weight average of the three best-performing ML models. No meta-learning — purely a test of whether diversity across modelling approaches improves over any single model.
+
+**Strengths:** More robust than any individual model — the score-distribution signal from ML-Poisson complements the classification signal from XGBoost and CatBoost. Matches CatBoost on accuracy while being less sensitive to training set composition.
+
+**Limitations:** Slower to run (trains three models). Averaging softens probability mass, which can hurt accuracy on decisive matches while helping RPS/Log-Loss calibration.

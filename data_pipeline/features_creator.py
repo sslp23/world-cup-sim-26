@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from tqdm import tqdm
 
 
 class FeaturesCreator:
@@ -26,6 +27,9 @@ class FeaturesCreator:
             .str.replace("IR Iran", "Iran")
             .str.replace("Korea Republic", "South Korea")
             .str.replace("USA", "United States")
+            .str.replace("Bosnia-Herzegovina", "Bosnia and Herzegovina")
+            .str.replace("Turkiye", "Turkey")
+            .str.replace("China", "China PR", regex=False)
         )
         # Use most recent confederation per team (handles any historical changes)
         self.conf_map = (
@@ -136,7 +140,7 @@ class FeaturesCreator:
         """
         features_list = []
 
-        for _, row in df.iterrows():
+        for _, row in tqdm(df.iterrows(), total=len(df), desc='Moving averages', unit='match'):
             home_features = self._calculate_team_features_at_date(df, row['home_team'], row['date'])
             away_features = self._calculate_team_features_at_date(df, row['away_team'], row['date'])
 

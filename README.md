@@ -82,7 +82,8 @@ wc_26_ml/
 │   ├── xgboost/             # XGBoost 3-class classifier
 │   ├── catboost/            # CatBoost 3-class classifier (best overall)
 │   ├── ordered_logit/       # Ordered logistic regression (3-feature baseline)
-│   └── ml_poisson/          # ML-Poisson hybrid (XGBoost regressor + Dixon-Coles matrix)
+│   ├── ml_poisson/          # ML-Poisson hybrid (XGBoost regressor + Dixon-Coles matrix)
+│   └── ensemble/            # Equal-weight ensemble of XGBoost + CatBoost + ML-Poisson
 └── data/
     ├── international_results.csv
     ├── resulting_data.csv
