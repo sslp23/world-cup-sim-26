@@ -82,12 +82,12 @@ Accuracy averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
 
 | Model | Avg Accuracy | Avg RPS | Avg Log-Loss |
 | --- | --- | --- | --- |
-| **Ensemble** (XGB + CB + MLP) | **57.2%** | **0.1956** | **0.9626** |
-| ML-Poisson | 56.9% | 0.1971 | 0.9695 |
+| **ML-Poisson** | **57.8%** | 0.1982 | 0.9734 |
+| Ensemble (XGB + CB + MLP) | 56.9% | 0.1968 | **0.9666** |
 | Ordered Logit | 56.2% | 0.1984 | 0.9683 |
-| Dixon-Coles | 55.9% | 0.1964 | 0.9641 |
-| CatBoost | 54.7% | 0.1985 | 0.9694 |
-| XGBoost | 53.8% | 0.2006 | 0.9889 |
+| Dixon-Coles | 55.6% | **0.1963** | 0.9641 |
+| CatBoost | 55.3% | 0.1998 | 0.9765 |
+| XGBoost | 54.1% | 0.2020 | 0.9930 |
 
 See [`backtest/output/`](backtest/output/) for per-match Excel results per model and WC edition.
 

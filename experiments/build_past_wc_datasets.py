@@ -66,6 +66,7 @@ def build_dataset(train_start: str, wc_end: str) -> pd.DataFrame:
         .str.replace('Bosnia-Herzegovina', 'Bosnia and Herzegovina')
         .str.replace('Turkiye', 'Turkey')
         .str.replace('China', 'China PR', regex=False)
+        .str.replace('Democratic Republic of the Congo', 'DR Congo', regex=False)
     )
     rank = (rank.set_index('rank_date')
                 .groupby('nation_full_name', group_keys=False)

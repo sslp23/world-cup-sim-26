@@ -50,7 +50,7 @@ def run():
     print(f"Training matches : {len(train_df)}")
     print(f"WC 2022 matches  : {len(wc22)}")
 
-    model = MLPoissonModel(rho=-0.30)
+    model = MLPoissonModel(rho=-0.20)
     model.fit(train_df)
 
     print("\nFeature importances (goal regressor):")

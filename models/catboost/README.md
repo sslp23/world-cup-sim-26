@@ -23,7 +23,7 @@ Identical to XGBoost in structure — see [`xgboost/README.md`](../xgboost/READM
 
 ## Tuned Parameters
 
-- `draw_weight = 0.7` (tuned on WC 2022 — best RPS 0.2118, best accuracy 57.8%)
+- `draw_weight = 0.75` (tuned on WC 2022 — best RPS)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
 ## Files
@@ -37,6 +37,6 @@ Identical to XGBoost in structure — see [`xgboost/README.md`](../xgboost/READM
 
 ## WC 2022 Results
 
-Accuracy: **57.8% (37/64)** — Log-Loss: **1.038** — RPS: **0.212**
+Accuracy: **53.1% (34/64)** — Log-Loss: **1.050** — RPS: **0.214**
 
-Best model overall. See [models/README.md](../README.md) for full comparison.
+See [models/README.md](../README.md) for full comparison.

@@ -30,6 +30,7 @@ class FeaturesCreator:
             .str.replace("Bosnia-Herzegovina", "Bosnia and Herzegovina")
             .str.replace("Turkiye", "Turkey")
             .str.replace("China", "China PR", regex=False)
+            .str.replace("Democratic Republic of the Congo", "DR Congo", regex=False)
         )
         # Use most recent confederation per team (handles any historical changes)
         self.conf_map = (
@@ -40,7 +41,9 @@ class FeaturesCreator:
         )
 
     def calculate_points_won(self, home_score, away_score):
-        """Returns points for home team: 3=win, 1=draw, 0=loss."""
+        """Returns points for home team: 3=win, 1=draw, 0=loss. NaN for unknown results."""
+        if pd.isna(home_score) or pd.isna(away_score):
+            return np.nan
         if home_score > away_score:
             return 3
         elif home_score == away_score:
@@ -227,8 +230,8 @@ class FeaturesCreator:
 
         norm_val = 1400.0
 
-        # Home games (team is home, opponent is away)
-        home = df[(df['home_team'] == team) & (df['date'] < current_date)].copy()
+        # Home games (team is home, opponent is away) — exclude rows with unknown scores (future matches)
+        home = df[(df['home_team'] == team) & (df['date'] < current_date) & df['home_score'].notna()].copy()
         home['points_won'] = home.apply(
             lambda r: self.calculate_points_won(r['home_score'], r['away_score']), axis=1
         )
@@ -241,8 +244,8 @@ class FeaturesCreator:
         home['goals_suffered_weighted'] = home['goals_suffered'] / (home['points_away'] / norm_val)
         home['goal_diff'] = home['goals'] - home['goals_suffered']
 
-        # Away games (team is away, opponent is home)
-        away = df[(df['away_team'] == team) & (df['date'] < current_date)].copy()
+        # Away games (team is away, opponent is home) — exclude rows with unknown scores (future matches)
+        away = df[(df['away_team'] == team) & (df['date'] < current_date) & df['away_score'].notna()].copy()
         away['points_won'] = away.apply(
             lambda r: self.calculate_points_won(r['away_score'], r['home_score']), axis=1
         )

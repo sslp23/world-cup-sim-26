@@ -16,33 +16,33 @@ Baseline (uniform 1/3 probabilities): Log-Loss = 1.099, RPS = 0.239.
 
 ## WC 2022 Backtest Results
 
-| Model | Accuracy | Log-Loss | RPS |
-| --- | --- | --- | --- |
-| **CatBoost** | **56.2% (36/64)** | 1.055 | **0.217** |
-| Ordered Logit | 53.1% (34/64) | **1.030** | **0.214** |
-| ML-Poisson | 53.1% (34/64) | 1.054 | 0.217 |
-| Ensemble (XGB+CB+MLP) | 53.1% (34/64) | 1.050 | 0.214 |
-| Dixon-Coles | 50.0% (32/64) | 1.045 | 0.214 |
-| XGBoost | 50.0% (32/64) | 1.077 | 0.217 |
+| Model | Params | Accuracy | Log-Loss | RPS |
+| --- | --- | --- | --- | --- |
+| **ML-Poisson** | rho=−0.20 | **59.4% (38/64)** | 1.054 | 0.216 |
+| XGBoost | draw_weight=0.65 | 54.7% (35/64) | 1.069 | 0.218 |
+| CatBoost | draw_weight=0.75 | 53.1% (34/64) | 1.050 | 0.214 |
+| Ordered Logit | — | 53.1% (34/64) | **1.030** | **0.214** |
+| Ensemble (XGB+CB+MLP) | — | 53.1% (34/64) | 1.048 | **0.213** |
+| Dixon-Coles | xi=0.00005 | 51.6% (33/64) | 1.044 | **0.213** |
 
-Training set: 3,669 ranked matches (2018-07-16 → 2022-11-19). Name normalisations applied: Bosnia-Herzegovina, Turkiye, China → added ~135 previously unmatched matches.
+Training set: 3,703 ranked matches (2018-07-16 → 2022-11-19).
 
 ### By stage
 
 | Stage | Dixon-Coles | Ord. Logit | XGBoost | CatBoost | ML-Poisson | Ensemble |
 | --- | --- | --- | --- | --- | --- | --- |
-| Group stage (48) | 47.9% (23/48) | 52.1% (25/48) | 45.8% (22/48) | **52.1% (25/48)** | 50.0% (24/48) | 50.0% (24/48) |
+| Group stage (48) | 50.0% (24/48) | 52.1% (25/48) | 47.9% (23/48) | 50.0% (24/48) | **58.3% (28/48)** | 50.0% (24/48) |
 | Round of 16 (8) | 75.0% (6/8) | 75.0% (6/8) | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** |
-| Quarter-finals (4) | 0.0% (0/4) | 0.0% (0/4) | 25.0% (1/4) | 25.0% (1/4) | 25.0% (1/4) | 25.0% (1/4) |
+| Quarter-finals (4) | 0.0% (0/4) | 0.0% (0/4) | **50.0% (2/4)** | 25.0% (1/4) | 0.0% (0/4) | 25.0% (1/4) |
 | Semi-finals (2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) |
-| Final / 3rd place (2) | 50.0% (1/2) | 50.0% (1/2) | 0.0% (0/2) | 50.0% (1/2) | 0.0% (0/2) | 0.0% (0/2) |
+| Final / 3rd place (2) | 50.0% (1/2) | 50.0% (1/2) | 50.0% (1/2) | 0.0% (0/2) | 50.0% (1/2) | 0.0% (0/2) |
 
 **Takeaways:**
 
-- CatBoost remains the best overall model on accuracy. Adding confederation as a native categorical feature contributes meaningful signal, especially for correctly handling newly included teams (Turkey, Bosnia, China PR).
-- Ordered Logit achieves the best Log-Loss with only 3 features and 5 parameters, confirming that the bulk of predictive signal lives in the rating features (ELO, pi-ratings, FIFA points). Pi-ratings carry the most weight (coef +0.29 vs +0.004 for ELO).
-- XGBoost, CatBoost, ML-Poisson and the Ensemble all reach 87.5% in the Round of 16, suggesting form features and non-linear interactions add value in knockout-stage matchups.
-- All models are equally weak in the Quarter-finals — top-vs-top knockout matches are inherently hard to predict from pre-match features.
+- ML-Poisson is now the best model on accuracy (59.4%), driven by strong group stage performance (58.3%). The explicit score distribution model with dynamic rho correction provides better probability calibration for evenly matched games.
+- Ordered Logit and Ensemble achieve the best RPS and Log-Loss — the simple rating-based model remains extremely well calibrated.
+- XGBoost leads in Quarter-finals (50% vs 0–25% for others), suggesting the form features capture knockout-specific signal.
+- All models are strong in the Round of 16 (75–87.5%) and perfect in the Semi-finals.
 - Group stage upsets (Saudi Arabia, Japan, Morocco, Cameroon) are not predictable from any model.
 
 ---

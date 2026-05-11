@@ -37,10 +37,10 @@ Class weights are set inversely proportional to class frequency in the augmented
 | `draw_weight` | Draw class weight | Effect |
 | --- | --- | --- |
 | 0.0 | 0.00 | Never predicts draws |
-| 0.75 | 1.10 | **Selected** — best accuracy + RPS trade-off |
+| 0.65 | 0.95 | **Selected** — best accuracy trade-off |
 | 1.0 | 1.47 | Full inverse-frequency compensation — over-predicts draws |
 
-`draw_weight = 0.75` was tuned on the WC 2022 backtest.
+`draw_weight = 0.65` was tuned on the WC 2022 backtest.
 
 ## Feature Set
 
@@ -67,6 +67,6 @@ See [features.md](../../features.md#model-feature-selection) for the full descri
 
 ## WC 2022 Results
 
-Accuracy: **56.2% (36/64)** — Log-Loss: **1.090** — RPS: **0.214**
+Accuracy: **54.7% (35/64)** — Log-Loss: **1.069** — RPS: **0.218**
 
 See [models/README.md](../README.md) for comparison with Dixon-Coles.

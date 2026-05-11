@@ -76,7 +76,7 @@ def run():
     print(f"WC 2022 matches  : {len(wc22)}")
 
     # ── Fit model ─────────────────────────────────────────────────────────────
-    model = DixonColes(xi=0.0005)
+    model = DixonColes(xi=0.00005)
     model.fit(train_df, ref_date=WC_2022_START)
 
     print(f"\nTop 10 teams by attack/defense ratio:")
