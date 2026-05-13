@@ -18,32 +18,22 @@ Baseline (uniform 1/3 probabilities): Log-Loss = 1.099, RPS = 0.239.
 
 | Model | Params | Accuracy | Log-Loss | RPS |
 | --- | --- | --- | --- | --- |
-| **ML-Poisson** | rho=−0.20 | **59.4% (38/64)** | 1.054 | 0.216 |
-| XGBoost | draw_weight=0.65 | 54.7% (35/64) | 1.069 | 0.218 |
-| CatBoost | draw_weight=0.75 | 53.1% (34/64) | 1.050 | 0.214 |
-| Ordered Logit | — | 53.1% (34/64) | **1.030** | **0.214** |
-| Ensemble (XGB+CB+MLP) | — | 53.1% (34/64) | 1.048 | **0.213** |
-| Dixon-Coles | xi=0.00005 | 51.6% (33/64) | 1.044 | **0.213** |
+| **Ordered Logit** | — | **56.2% (36/64)** | 1.044 | 0.218 |
+| CatBoost | draw_weight=0.72 | 54.7% (35/64) | **1.042** | **0.214** |
+| ML-Poisson | rho=−0.40 | 54.7% (35/64) | 1.074 | 0.220 |
+| Ensemble (XGB+CB+MLP) | — | 54.7% (35/64) | 1.056 | 0.216 |
+| XGBoost | draw_weight=0.65 | 53.1% (34/64) | 1.082 | 0.221 |
+| Dixon-Coles | xi=0.0005 | 50.0% (32/64) | 1.047 | 0.214 |
 
-Training set: 3,703 ranked matches (2018-07-16 → 2022-11-19).
-
-### By stage
-
-| Stage | Dixon-Coles | Ord. Logit | XGBoost | CatBoost | ML-Poisson | Ensemble |
-| --- | --- | --- | --- | --- | --- | --- |
-| Group stage (48) | 50.0% (24/48) | 52.1% (25/48) | 47.9% (23/48) | 50.0% (24/48) | **58.3% (28/48)** | 50.0% (24/48) |
-| Round of 16 (8) | 75.0% (6/8) | 75.0% (6/8) | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** | **87.5% (7/8)** |
-| Quarter-finals (4) | 0.0% (0/4) | 0.0% (0/4) | **50.0% (2/4)** | 25.0% (1/4) | 0.0% (0/4) | 25.0% (1/4) |
-| Semi-finals (2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) | 100% (2/2) |
-| Final / 3rd place (2) | 50.0% (1/2) | 50.0% (1/2) | 50.0% (1/2) | 0.0% (0/2) | 50.0% (1/2) | 0.0% (0/2) |
+Training set: all ranked matches before 2022-11-20 in `data/past_wc/wc2022/`.
 
 **Takeaways:**
 
-- ML-Poisson is now the best model on accuracy (59.4%), driven by strong group stage performance (58.3%). The explicit score distribution model with dynamic rho correction provides better probability calibration for evenly matched games.
-- Ordered Logit and Ensemble achieve the best RPS and Log-Loss — the simple rating-based model remains extremely well calibrated.
-- XGBoost leads in Quarter-finals (50% vs 0–25% for others), suggesting the form features capture knockout-specific signal.
-- All models are strong in the Round of 16 (75–87.5%) and perfect in the Semi-finals.
-- Group stage upsets (Saudi Arabia, Japan, Morocco, Cameroon) are not predictable from any model.
+- WC 2022 is the parameter-tuning set, not an out-of-sample test. Results here reflect fitted hyperparameters.
+- Ordered Logit leads on accuracy (56.2%) with just three rating features — a strong reminder that ELO/points are the dominant signal.
+- CatBoost achieves the best Log-Loss (1.042) and RPS (0.214), showing better probability calibration than the other classifiers even on the tuning WC.
+- ML-Poisson's explicit score model produces well-calibrated probabilities but its accuracy is dragged down by the WC 2022 upsets (Saudi Arabia, Japan, Morocco).
+- Group-stage upsets are unpredictable from any model — all models fail on the same extreme mismatches.
 
 ---
 
@@ -78,7 +68,7 @@ See [`xgboost/README.md`](xgboost/README.md) for design details.
 
 **Key parameters:**
 
-- `draw_weight = 0.75` — draw class weight multiplier (tuned on WC 2022)
+- `draw_weight = 0.65` — draw class weight multiplier (tuned on WC 2022)
 - `n_estimators = 500`, `learning_rate = 0.05`, `max_depth = 4`
 
 **Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.
@@ -123,7 +113,7 @@ A hybrid model combining an XGBoost goal regressor with a Dixon-Coles score matr
 
 **Key parameters:**
 
-- `rho_max = −0.30` — maximum Dixon-Coles low-score correction (tuned on WC 2022)
+- `rho_max = −0.40` — maximum Dixon-Coles low-score correction (tuned on WC 2022)
 - `n_estimators = 500`, `learning_rate = 0.05`, `max_depth = 4`, objective: `count:poisson`
 
 **Training data:** All matches before 2022-11-20 with complete rating and form features.
@@ -144,7 +134,7 @@ See [`catboost/README.md`](catboost/README.md) for design details.
 
 **Key parameters:**
 
-- `draw_weight = 0.7` — draw class weight multiplier (tuned on WC 2022)
+- `draw_weight = 0.72` — draw class weight multiplier (tuned on WC 2022)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
 **Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.

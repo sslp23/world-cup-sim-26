@@ -1,6 +1,8 @@
 """
-Trains Ensemble (XGBoost + CatBoost + ML-Poisson) on post-WC22 data
-and predicts WC26 group stage probabilities.
+Trains CatBoost on post-WC22 data and predicts WC26 group stage probabilities.
+
+CatBoost selected as best model: 58.4% avg accuracy, 0.1944 avg RPS, 0.9602 avg Log-Loss
+across 5 WC editions (2006-2022) — best on all three metrics.
 """
 
 import os
@@ -10,21 +12,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pandas as pd
 from tqdm import tqdm
 
-from models.xgboost.model    import XGBoostPredictor
-from models.catboost.model   import CatBoostPredictor
-from models.ml_poisson.model import MLPoissonModel
+from models.catboost.model import CatBoostPredictor
 
 WC26_START    = pd.Timestamp('2026-06-11')
 WC26_END      = pd.Timestamp('2026-06-27')
 OUTCOME_ORDER = ['home_win', 'draw', 'away_win']
-
-
-def _avg_probs(*prob_dicts):
-    result = {o: 0.0 for o in OUTCOME_ORDER}
-    for p in prob_dicts:
-        for o in OUTCOME_ORDER:
-            result[o] += p[o] / len(prob_dicts)
-    return result
 
 
 def run(full_df: pd.DataFrame) -> list[dict]:
@@ -44,19 +36,14 @@ def run(full_df: pd.DataFrame) -> list[dict]:
     wc26_df.to_csv('data/wc_26_data.csv', index=False)
     print(f'WC26 dataset saved to data/wc_26_data.csv')
 
-    print('Training Ensemble (XGBoost + CatBoost + ML-Poisson)...')
-    xgb = XGBoostPredictor(draw_weight=0.65);  xgb.fit(train_df)
-    cb  = CatBoostPredictor(draw_weight=0.75); cb.fit(train_df)
-    mlp = MLPoissonModel(rho=-0.20);           mlp.fit(train_df)
+    print('Training CatBoost (draw_weight=0.72)...')
+    model = CatBoostPredictor(draw_weight=0.72)
+    model.fit(train_df)
 
     print('Predicting...')
     predictions = []
     for _, match in tqdm(wc26_df.iterrows(), total=len(wc26_df)):
-        probs = _avg_probs(
-            xgb.predict_proba_row(match),
-            cb.predict_proba_row(match),
-            mlp.predict_proba_row(match),
-        )
+        probs    = model.predict_proba_row(match)
         pred_raw = max(probs, key=probs.get)
         pred_lbl = {
             'home_win': match['home_team'],

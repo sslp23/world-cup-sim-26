@@ -24,39 +24,35 @@ from xgboost import XGBClassifier
 OUTCOME_ORDER  = ['home_win', 'draw', 'away_win']
 OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 
-# Selected features from EDA (eda/README.md).
-# neutral is excluded: augmentation + symmetrized inference make the model
-# venue-agnostic without needing an explicit flag.
-FEATURE_COLS = [
-    # Ratings
+# Signed difference features — negated when teams are swapped during augmentation.
+DIFF_COLS = [
     'points_dif',
     'elo_diff',
-    'pi_diff',
-    # Weighted points won — long and short window
     'pww_ma20_diff',
     'pww_ma5_diff',
-    # Weighted goals scored — long and short window
     'gw_ma20_diff',
     'gw_ma5_diff',
-    # Weighted goals suffered — long and short window
     'gsw_ma20_diff',
     'gsw_ma5_diff',
-    # Goal difference — long and short window
     'gd_ma20_diff',
     'gd_ma5_diff',
 ]
 
+# Absolute-value features — magnitude of quality gap, unchanged by team swap.
+ABS_COLS = ['abs_elo_diff', 'abs_points_dif']
 
-def _build_diff_features(df):
+FEATURE_COLS = DIFF_COLS + ABS_COLS
+
+
+def _build_features(df):
     """
-    Construct all difference features from the raw home/away columns.
-    Returns a DataFrame with FEATURE_COLS as columns.
+    Construct all features from the raw home/away columns.
+    Diff features are (home − away). Abs features capture mismatch magnitude.
     """
     feat = pd.DataFrame(index=df.index)
 
     feat['points_dif']    = df['points_dif']
     feat['elo_diff']      = df['elo_diff']
-    feat['pi_diff']       = df['pi_diff']
 
     feat['pww_ma20_diff'] = df['home_points_weighted_ma_20'] - df['away_points_weighted_ma_20']
     feat['pww_ma5_diff']  = df['home_points_weighted_ma_5']  - df['away_points_weighted_ma_5']
@@ -70,20 +66,28 @@ def _build_diff_features(df):
     feat['gd_ma20_diff']  = df['home_goal_diff_ma_20'] - df['away_goal_diff_ma_20']
     feat['gd_ma5_diff']   = df['home_goal_diff_ma_5']  - df['away_goal_diff_ma_5']
 
+    feat['abs_elo_diff']   = df['elo_diff'].abs()
+    feat['abs_points_dif'] = df['points_dif'].abs()
+
     return feat[FEATURE_COLS]
 
 
-def _augment(X, y):
+def _augment(X_df, y):
     """
     Double the dataset by adding a flipped version of every match:
-      - Negate all diff features (equivalent to swapping home/away teams)
+      - Negate DIFF_COLS (equivalent to swapping home/away teams)
+      - ABS_COLS are unchanged (mismatch magnitude is the same regardless of labelling)
       - Swap home_win (0) ↔ away_win (2); draw (1) stays draw
 
-    Returns (X_aug, y_aug) with 2× the original rows.
+    Returns (X_aug, y_aug) as (DataFrame, ndarray) with 2× the original rows.
     """
-    X_flip = -X
+    X_flip = X_df.copy()
+    for col in DIFF_COLS:
+        X_flip[col] = -X_df[col]
     y_flip = np.where(y == 0, 2, np.where(y == 2, 0, 1))
-    return np.vstack([X, X_flip]), np.concatenate([y, y_flip])
+    X_aug  = pd.concat([X_df, X_flip], ignore_index=True)
+    y_aug  = np.concatenate([y, y_flip])
+    return X_aug, y_aug
 
 
 class XGBoostPredictor:
@@ -128,7 +132,7 @@ class XGBoostPredictor:
             verbosity=0,
         )
         self.draw_weight = draw_weight
-        self._fitted = False
+        self._fitted     = False
 
     def fit(self, df):
         """
@@ -139,24 +143,20 @@ class XGBoostPredictor:
         ----------
         df : DataFrame with all raw feature columns and home_score/away_score.
         """
-        X = _build_diff_features(df)
+        X = _build_features(df)
         y = df.apply(
             lambda r: 0 if r['home_score'] > r['away_score']
                       else (1 if r['home_score'] == r['away_score'] else 2),
             axis=1
         ).values
 
-        mask = X.notna().all(axis=1)
-        X_clean = X[mask].values
+        mask = X[DIFF_COLS].notna().all(axis=1)
+        X_clean = X[mask].reset_index(drop=True)
         y_clean = y[mask]
 
-        # Augment: add flipped version of every match
         X_aug, y_aug = _augment(X_clean, y_clean)
 
-        # Class weights: inversely proportional to class frequency, with an
-        # additional draw_weight multiplier to control how aggressively draws
-        # are upweighted. draw_weight=1.0 = full inverse-frequency compensation.
-        class_counts = np.bincount(y_aug, minlength=3)
+        class_counts  = np.bincount(y_aug, minlength=3)
         class_weights = len(y_aug) / (3 * class_counts)
         class_weights[1] *= self.draw_weight
         sample_weights = class_weights[y_aug]
@@ -166,7 +166,7 @@ class XGBoostPredictor:
         print(f"Class distribution — home_win: {class_counts[0]}  draw: {class_counts[1]}  away_win: {class_counts[2]}")
         print(f"Class weights      — home_win: {class_weights[0]:.3f}  draw: {class_weights[1]:.3f}  away_win: {class_weights[2]:.3f}  (draw_weight={self.draw_weight})")
 
-        self.model.fit(X_aug, y_aug, sample_weight=sample_weights)
+        self.model.fit(X_aug[FEATURE_COLS].values, y_aug, sample_weight=sample_weights)
         self._fitted = True
 
     def predict_proba_row(self, row):
@@ -187,13 +187,16 @@ class XGBoostPredictor:
         if not self._fitted:
             raise RuntimeError("Model not fitted. Call fit() first.")
 
-        X_fwd = _build_diff_features(pd.DataFrame([row])).fillna(0)
-        X_inv = -X_fwd  # negate all diffs = swap the two teams
+        X_fwd = _build_features(pd.DataFrame([row]))[FEATURE_COLS].fillna(0)
 
-        p_fwd = self.model.predict_proba(X_fwd.values)[0]  # [hw, d, aw] with A as home
-        p_inv = self.model.predict_proba(X_inv.values)[0]  # [hw, d, aw] with B as home
+        X_inv = X_fwd.copy()
+        for col in DIFF_COLS:
+            X_inv[col] = -X_fwd[col]
+        # ABS_COLS stay the same
 
-        # When teams are swapped: home_win ↔ away_win, draw stays draw
+        p_fwd = self.model.predict_proba(X_fwd.values)[0]
+        p_inv = self.model.predict_proba(X_inv.values)[0]
+
         p_hw = (p_fwd[0] + p_inv[2]) / 2
         p_d  = (p_fwd[1] + p_inv[1]) / 2
         p_aw = (p_fwd[2] + p_inv[0]) / 2

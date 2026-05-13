@@ -19,10 +19,10 @@ from catboost import CatBoostClassifier
 OUTCOME_ORDER  = ['home_win', 'draw', 'away_win']
 OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 
-NUMERIC_COLS = [
+# Signed difference features — negated when teams are swapped during augmentation.
+DIFF_COLS = [
     'points_dif',
     'elo_diff',
-    'pi_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
     'gw_ma20_diff',
@@ -33,25 +33,27 @@ NUMERIC_COLS = [
     'gd_ma5_diff',
 ]
 
-CATEGORICAL_COLS = [
-    'confederation_home',
-    'confederation_away',
+# Absolute-value features — magnitude of quality gap, unchanged by team swap.
+ABS_COLS = [
+    'abs_elo_diff',
+    'abs_points_dif',
 ]
 
-FEATURE_COLS = NUMERIC_COLS + CATEGORICAL_COLS
+NUMERIC_COLS     = DIFF_COLS + ABS_COLS
+CATEGORICAL_COLS = ['confederation_home', 'confederation_away']
+FEATURE_COLS     = NUMERIC_COLS + CATEGORICAL_COLS
 
 
 def _build_features(df):
     """
     Build feature DataFrame from raw match columns.
-    Numeric features are difference (home - away).
+    Diff features are (home - away). Abs features capture mismatch magnitude.
     Categorical features are kept as-is (CatBoost handles encoding).
     """
     feat = pd.DataFrame(index=df.index)
 
     feat['points_dif']    = df['points_dif']
     feat['elo_diff']      = df['elo_diff']
-    feat['pi_diff']       = df['pi_diff']
 
     feat['pww_ma20_diff'] = df['home_points_weighted_ma_20'] - df['away_points_weighted_ma_20']
     feat['pww_ma5_diff']  = df['home_points_weighted_ma_5']  - df['away_points_weighted_ma_5']
@@ -65,6 +67,9 @@ def _build_features(df):
     feat['gd_ma20_diff']  = df['home_goal_diff_ma_20'] - df['away_goal_diff_ma_20']
     feat['gd_ma5_diff']   = df['home_goal_diff_ma_5']  - df['away_goal_diff_ma_5']
 
+    feat['abs_elo_diff']   = df['elo_diff'].abs()
+    feat['abs_points_dif'] = df['points_dif'].abs()
+
     feat['confederation_home'] = df['confederation_home'].fillna('Unknown')
     feat['confederation_away'] = df['confederation_away'].fillna('Unknown')
 
@@ -74,11 +79,12 @@ def _build_features(df):
 def _flip_features(X_df):
     """
     Return a flipped version of the feature DataFrame:
-      - Negate all numeric diff features (equivalent to swapping teams)
+      - Negate DIFF_COLS (equivalent to swapping teams)
+      - ABS_COLS are unchanged (mismatch magnitude is the same regardless of labelling)
       - Swap confederation_home <-> confederation_away
     """
     X_flip = X_df.copy()
-    for col in NUMERIC_COLS:
+    for col in DIFF_COLS:
         X_flip[col] = -X_df[col]
     X_flip['confederation_home'] = X_df['confederation_away']
     X_flip['confederation_away'] = X_df['confederation_home']

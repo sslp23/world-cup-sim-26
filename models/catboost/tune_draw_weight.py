@@ -58,7 +58,7 @@ if __name__ == "__main__":
         (full_df['date'] <= WC_2022_END)
     ].copy().reset_index(drop=True)
 
-    draw_weights = [0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1.0]
+    draw_weights = [0.60, 0.65, 0.70, 0.72, 0.75, 0.77, 0.80]
     results = []
 
     for dw in draw_weights:

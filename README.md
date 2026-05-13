@@ -78,16 +78,16 @@ Implements the [eloratings.net](https://www.eloratings.net) formula:
 
 ## Cross-WC Evaluation Summary
 
-Accuracy averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
+Averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
 
 | Model | Avg Accuracy | Avg RPS | Avg Log-Loss |
 | --- | --- | --- | --- |
-| **ML-Poisson** | **57.8%** | 0.1982 | 0.9734 |
-| Ensemble (XGB + CB + MLP) | 56.9% | 0.1968 | **0.9666** |
-| Ordered Logit | 56.2% | 0.1984 | 0.9683 |
-| Dixon-Coles | 55.6% | **0.1963** | 0.9641 |
-| CatBoost | 55.3% | 0.1998 | 0.9765 |
-| XGBoost | 54.1% | 0.2020 | 0.9930 |
+| **CatBoost** | **58.4%** | **0.1944** | **0.9602** |
+| Ordered Logit | 57.8% | 0.1994 | 0.9713 |
+| Ensemble (XGB + CB + MLP) | 57.5% | 0.1953 | 0.9624 |
+| XGBoost | 56.2% | 0.1992 | 0.9792 |
+| Dixon-Coles | 55.6% | 0.1963 | 0.9641 |
+| ML-Poisson | 55.3% | 0.1994 | 0.9809 |
 
 See [`backtest/output/`](backtest/output/) for per-match Excel results per model and WC edition.
 

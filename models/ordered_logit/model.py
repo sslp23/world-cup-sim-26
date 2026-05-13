@@ -25,13 +25,12 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 OUTCOME_ORDER  = ['home_win', 'draw', 'away_win']
 
 # Rating-only features — the "fences" model
-FEATURE_COLS = ['elo_diff', 'pi_diff', 'points_dif']
+FEATURE_COLS = ['elo_diff', 'points_dif']
 
 
 def _build_features(df):
     feat = pd.DataFrame(index=df.index)
     feat['elo_diff']   = df['elo_diff']
-    feat['pi_diff']    = df['pi_diff']
     feat['points_dif'] = df['points_dif']
     return feat[FEATURE_COLS]
 

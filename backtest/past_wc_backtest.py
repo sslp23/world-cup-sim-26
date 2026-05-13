@@ -8,7 +8,7 @@ For each WC edition the dataset in data/past_wc/wc{year}/ is used:
 Models evaluated:
   Dixon-Coles | XGBoost | CatBoost | Ordered Logit | ML-Poisson | Ensemble
 
-Output: backtest_output/{model}.xlsx
+Output: backtest/output/{model}.xlsx
   Each file has one sheet per WC edition (WC 22, WC 18, ..., WC 06).
   Each sheet contains the per-match results table + aggregate metrics block.
 
@@ -247,7 +247,7 @@ def save_excel(model_name, sheets_data, out_dir):
 # ── Main ───────────────────────────────────────────────────────────────────────
 
 def run():
-    out_dir = 'backtest_output'
+    out_dir = 'backtest/output'
     os.makedirs(out_dir, exist_ok=True)
 
     # Store per-model results: {model_name: [(year, rows), ...]}
@@ -287,16 +287,16 @@ def run():
         dc  = DixonColes(xi=0.0005)
         dc.fit(train_df, ref_date=wc_start_ts)
 
-        xgb = XGBoostPredictor(draw_weight=0.75)
+        xgb = XGBoostPredictor(draw_weight=0.65)
         xgb.fit(train_df)
 
-        cb  = CatBoostPredictor(draw_weight=0.7)
+        cb  = CatBoostPredictor(draw_weight=0.72)
         cb.fit(train_df)
 
         ol  = OrderedLogitPredictor()
         ol.fit(train_df)
 
-        mlp = MLPoissonModel(rho=-0.30)
+        mlp = MLPoissonModel(rho=-0.40)
         mlp.fit(train_df)
 
         models = {

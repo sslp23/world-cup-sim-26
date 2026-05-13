@@ -23,7 +23,8 @@ from xgboost import XGBRegressor
 FEATURE_COLS = [
     # Ratings from attacker's perspective (positive = attacker stronger)
     'elo_diff',
-    'pi_neutral_diff',  # avg(pi_h, pi_a) attacker - avg(pi_h, pi_a) defender
+    # Absolute quality gap — same regardless of attacker perspective
+    'abs_elo_diff',
     # Attacker's recent offensive output (weighted by opponent strength)
     'att_gw_ma20',
     'att_gw_ma5',
@@ -41,15 +42,13 @@ def _build_attacker_features(df, attacker='home'):
 
     attacker='home': home team attacks, away team defends.
     attacker='away': away team attacks, home team defends (negate ratings).
+    abs_elo_diff is the same in both perspectives — it captures mismatch magnitude.
     """
     feat = pd.DataFrame(index=df.index)
 
-    pi_neutral_home = (df['pi_h_home'] + df['pi_a_home']) / 2
-    pi_neutral_away = (df['pi_h_away'] + df['pi_a_away']) / 2
-
     if attacker == 'home':
         feat['elo_diff']          = df['elo_diff']
-        feat['pi_neutral_diff']   = pi_neutral_home - pi_neutral_away
+        feat['abs_elo_diff']      = df['elo_diff'].abs()
         feat['att_gw_ma20']       = df['home_goals_weighted_ma_20']
         feat['att_gw_ma5']        = df['home_goals_weighted_ma_5']
         feat['att_pww_ma20']      = df['home_points_weighted_ma_20']
@@ -58,7 +57,7 @@ def _build_attacker_features(df, attacker='home'):
         feat['def_gd_ma20']       = df['away_goal_diff_ma_20']
     else:  # away team attacks
         feat['elo_diff']          = -df['elo_diff']   # negate: positive = away stronger
-        feat['pi_neutral_diff']   = pi_neutral_away - pi_neutral_home
+        feat['abs_elo_diff']      = df['elo_diff'].abs()
         feat['att_gw_ma20']       = df['away_goals_weighted_ma_20']
         feat['att_gw_ma5']        = df['away_goals_weighted_ma_5']
         feat['att_pww_ma20']      = df['away_points_weighted_ma_20']
