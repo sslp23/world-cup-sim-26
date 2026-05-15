@@ -19,20 +19,22 @@ Baseline (uniform 1/3 probabilities): Log-Loss = 1.099, RPS = 0.239.
 | Model | Params | Accuracy | Log-Loss | RPS |
 | --- | --- | --- | --- | --- |
 | **Ordered Logit** | — | **56.2% (36/64)** | 1.044 | 0.218 |
-| CatBoost | draw_weight=0.72 | 54.7% (35/64) | **1.042** | **0.214** |
-| ML-Poisson | rho=−0.40 | 54.7% (35/64) | 1.074 | 0.220 |
-| Ensemble (XGB+CB+MLP) | — | 54.7% (35/64) | 1.056 | 0.216 |
-| XGBoost | draw_weight=0.65 | 53.1% (34/64) | 1.082 | 0.221 |
-| Dixon-Coles | xi=0.0005 | 50.0% (32/64) | 1.047 | 0.214 |
+| ML-Poisson | rho=−0.40 | 56.2% (36/64) | 1.072 | 0.221 |
+| Ensemble (XGB+CB+MLP) | — | 51.6% (33/64) | 1.073 | 0.219 |
+| XGBoost | draw_weight=0.65 | 50.0% (32/64) | 1.118 | 0.226 |
+| Dixon-Coles† | xi=0.0005 | 50.0% (32/64) | **1.047** | **0.214** |
+| CatBoost | draw_weight=0.72 | 48.4% (31/64) | 1.061 | 0.218 |
+
+† Dixon-Coles is excluded from the cross-WC evaluation (`past_wc_backtest.py`) due to runtime cost. The WC 2022 result above is from its individual backtest.
 
 Training set: all ranked matches before 2022-11-20 in `data/past_wc/wc2022/`.
 
 **Takeaways:**
 
 - WC 2022 is the parameter-tuning set, not an out-of-sample test. Results here reflect fitted hyperparameters.
-- Ordered Logit leads on accuracy (56.2%) with just three rating features — a strong reminder that ELO/points are the dominant signal.
-- CatBoost achieves the best Log-Loss (1.042) and RPS (0.214), showing better probability calibration than the other classifiers even on the tuning WC.
-- ML-Poisson's explicit score model produces well-calibrated probabilities but its accuracy is dragged down by the WC 2022 upsets (Saudi Arabia, Japan, Morocco).
+- Ordered Logit and ML-Poisson share the best accuracy (56.2%) — rating features alone carry most of the predictive signal.
+- Dixon-Coles achieves the best Log-Loss (1.047) and RPS (0.214) on WC 2022, driven by its well-calibrated score distribution model.
+- CatBoost's WC 2022 accuracy (48.4%) is below its cross-WC average (56.6%) — WC 2022 upsets (Saudi Arabia, Japan, Morocco) disproportionately hurt the ML classifiers.
 - Group-stage upsets are unpredictable from any model — all models fail on the same extreme mismatches.
 
 ---
@@ -71,9 +73,11 @@ See [`xgboost/README.md`](xgboost/README.md) for design details.
 - `draw_weight = 0.65` — draw class weight multiplier (tuned on WC 2022)
 - `n_estimators = 500`, `learning_rate = 0.05`, `max_depth = 4`
 
+**Features:** Signed difference features (home − away) for ELO, FIFA points, weighted goals, weighted points won, goal difference; plus `abs_elo_diff` and `abs_points_dif` to capture the size of the quality gap independently of direction.
+
 **Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.
 
-**Strengths:** Incorporates all rating systems (ELO, pi-ratings, FIFA points) and form features simultaneously. Learns non-linear interactions between features.
+**Strengths:** Incorporates all rating systems (ELO, FIFA points) and form features simultaneously. Learns non-linear interactions between features.
 
 **Limitations:** Black-box — harder to interpret individual predictions. Does not model score distributions, only outcome probabilities.
 
@@ -108,8 +112,7 @@ A hybrid model combining an XGBoost goal regressor with a Dixon-Coles score matr
 
 - **Single attacker-perspective regressor**: one XGBoost model is trained on both home and away observations simultaneously (attacker features: their recent offensive output; defender features: opponent's recent defensive record). Predicting `lambda_home` uses the home team as attacker; `lambda_away` negates the rating signs and swaps the form features.
 - **Symmetrized inference**: each match is predicted forward (home as home) and inverted (teams swapped), then the two score matrices are averaged. Removes residual home/away label bias at neutral WC venues.
-- **`pi_neutral_diff`**: instead of the raw `pi_diff = pi_h_home − pi_a_away` (which bakes in home/away venue context), uses `avg(pi_h, pi_a) of attacker − avg(pi_h, pi_a) of defender`. This is neutral-venue aware — critical for WC prediction where the host's inflated `pi_h` would otherwise dominate.
-- **Match-conditional dynamic rho**: `rho_eff = rho_max × (1 − |λ_home − λ_away| / (λ_home + λ_away))`. Evenly matched games receive the full draw correction; lopsided games receive little/none. `rho_max = −0.30` (tuned on WC 2022).
+- **Match-conditional dynamic rho**: `rho_eff = rho_max × (1 − |λ_home − λ_away| / (λ_home + λ_away))`. Evenly matched games receive the full draw correction; lopsided games receive little/none. `rho_max = −0.40` (tuned on WC 2022).
 
 **Key parameters:**
 
@@ -137,9 +140,11 @@ See [`catboost/README.md`](catboost/README.md) for design details.
 - `draw_weight = 0.72` — draw class weight multiplier (tuned on WC 2022)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
+**Features:** Same signed difference features as XGBoost, plus `abs_elo_diff` and `abs_points_dif` (quality gap magnitude), and `confederation_home` / `confederation_away` as native categorical features.
+
 **Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.
 
-**Strengths:** Best overall performer on accuracy. Handles categorical confederation features natively without one-hot encoding, which avoids information loss and reduces the risk of overfitting sparse dummy variables.
+**Strengths:** Best overall performer across all three metrics (accuracy, RPS, Log-Loss) in the cross-WC evaluation. Handles categorical confederation features natively without one-hot encoding. The `abs` features allow the model to learn that large quality gaps suppress draws regardless of which team is stronger.
 
 **Limitations:** Black-box. Does not model score distributions, only outcome probabilities.
 

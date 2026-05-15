@@ -92,6 +92,10 @@ class FeaturesCreator:
         # neutral and tournament columns are carried through from the source data.
         df['tournament_weight'] = df['tournament'].apply(self._get_tournament_weight)
 
+        # Ensure points columns are numeric (CSV may have mixed types from merge)
+        df['points_home'] = pd.to_numeric(df['points_home'], errors='coerce')
+        df['points_away'] = pd.to_numeric(df['points_away'], errors='coerce')
+
         # ==================== WEIGHTED POINTS (BY OPPONENT FIFA POINTS) ====================
         # Normalised by a static value (1400).
         # Results against stronger opponents earn proportionally more credit.

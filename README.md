@@ -72,7 +72,12 @@ See [eda/README.md](eda/README.md) for the exploratory data analysis — feature
 
 Implements the [eloratings.net](https://www.eloratings.net) formula:
 
-- **5-tier K-factor**: 60 (WC finals) → 50 (continental finals) → 40 (qualifiers) → 30 (other) → 20 (friendlies)
+- **5-tier K-factor**:
+  - K=60: FIFA World Cup finals
+  - K=50: Continental championships (Euro, Copa América, AFCON, Asian Cup, Gold Cup, Olympics, …)
+  - K=40: World Cup qualifiers + UEFA/CONCACAF Nations League (competitive continental leagues)
+  - K=30: All other tournaments
+  - K=20: Friendly matches
 - **Goal difference multiplier**: ×1.5 for 2-goal wins, ×1.75 for 3, ×(1.75 + (N−3)/8) for N≥4
 - **Home advantage**: +100 to home team's effective rating (skipped on neutral venues)
 
@@ -82,12 +87,13 @@ Averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
 
 | Model | Avg Accuracy | Avg RPS | Avg Log-Loss |
 | --- | --- | --- | --- |
-| **CatBoost** | **58.4%** | **0.1944** | **0.9602** |
-| Ordered Logit | 57.8% | 0.1994 | 0.9713 |
-| Ensemble (XGB + CB + MLP) | 57.5% | 0.1953 | 0.9624 |
-| XGBoost | 56.2% | 0.1992 | 0.9792 |
-| Dixon-Coles | 55.6% | 0.1963 | 0.9641 |
-| ML-Poisson | 55.3% | 0.1994 | 0.9809 |
+| Ensemble (XGB + CB + MLP) | **57.8%** | 0.1968 | 0.9700 |
+| Ordered Logit | **57.8%** | 0.1995 | 0.9714 |
+| **CatBoost** | 56.6% | **0.1946** | **0.9593** |
+| ML-Poisson | 55.6% | 0.1995 | 0.9806 |
+| XGBoost | 50.9% | 0.2037 | 1.0061 |
+
+CatBoost leads on probability calibration (best Log-Loss and RPS); Ensemble and Ordered Logit lead on accuracy. Dixon-Coles is excluded from the cross-WC evaluation (too slow for 5-edition batch runs).
 
 See [`backtest/output/`](backtest/output/) for per-match Excel results per model and WC edition.
 
@@ -118,7 +124,13 @@ wc_26_ml/
 │   └── ensemble/            # Equal-weight ensemble of XGBoost + CatBoost + ML-Poisson
 ├── backtest/                # Stage 3: cross-WC evaluation (WC 2006–2022)
 │   ├── past_wc_backtest.py  # Runs all models on all past WC editions
+│   ├── avg_performance.py   # Reads output/*.xlsx → avg_performance.xlsx summary
 │   └── output/              # Per-match Excel results (one file per model)
+├── simulation/
+│   ├── dataset.py           # Builds post-WC22 training set + WC26 group stage rows
+│   ├── predict.py           # Trains CatBoost on post-WC22 data, predicts WC26
+│   ├── explain.py           # SHAP explanation for a single WC26 match (CatBoost)
+│   └── output/              # wc_26_sim.xlsx — full group stage predictions
 ├── experiments/             # Ad-hoc tests (training window size, dataset builder)
 └── data/
     ├── international_results.csv

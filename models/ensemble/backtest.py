@@ -78,15 +78,15 @@ def run():
 
     # ── Train all models ───────────────────────────────────────────────────────
     print("\nTraining XGBoost...")
-    xgb = XGBoostPredictor(draw_weight=0.75)
+    xgb = XGBoostPredictor(draw_weight=1)
     xgb.fit(train_df)
 
     print("Training CatBoost...")
-    cb = CatBoostPredictor(draw_weight=0.7)
+    cb = CatBoostPredictor(draw_weight=0.67)
     cb.fit(train_df)
 
     print("Training ML-Poisson...")
-    mlp = MLPoissonModel(rho=-0.30)
+    mlp = MLPoissonModel(rho=-0.40)
     mlp.fit(train_df)
 
     # ── Predict ────────────────────────────────────────────────────────────────

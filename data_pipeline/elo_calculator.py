@@ -17,6 +17,7 @@ K50 = {
     'UEFA Euro',
     'Copa América',
     'Copa America',
+    'Copa Am�rica',   # encoding variant in source CSV
     'Africa Cup of Nations',
     'AFC Asian Cup',
     'Asian Cup',
@@ -27,6 +28,13 @@ K50 = {
     'Olympic Games',
     'CONMEBOL-UEFA Cup of Champions',
     'CONMEBOL–UEFA Cup of Champions',
+}
+
+# Competitive tournaments that are not continental finals or qualifiers
+# Nations League competitions replace friendly slots with competitive matches
+K40_TOURNAMENTS = {
+    'UEFA Nations League',
+    'CONCACAF Nations League',
 }
 
 # Qualifiers + other significant tournaments
@@ -59,11 +67,15 @@ def get_k_factor(tournament):
     if any(name in t for name in K50):
         return 50
 
+    # Competitive continental league tournaments (Nations Leagues)
+    if t in K40_TOURNAMENTS:
+        return 40
+
     # Friendlies
     if any(kw in t_lower for kw in K20_KEYWORDS):
         return 20
 
-    # Everything else (Nations League, regional cups, etc.)
+    # Everything else (regional cups, etc.)
     return 30
 
 

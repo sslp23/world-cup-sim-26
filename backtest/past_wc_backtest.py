@@ -6,7 +6,7 @@ For each WC edition the dataset in data/past_wc/wc{year}/ is used:
   - Test set     : the 64 WC matches of that edition
 
 Models evaluated:
-  Dixon-Coles | XGBoost | CatBoost | Ordered Logit | ML-Poisson | Ensemble
+  XGBoost | CatBoost | Ordered Logit | ML-Poisson | Ensemble
 
 Output: backtest/output/{model}.xlsx
   Each file has one sheet per WC edition (WC 22, WC 18, ..., WC 06).
@@ -27,7 +27,6 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-from models.dixon_coles.model   import DixonColes
 from models.xgboost.model       import XGBoostPredictor
 from models.catboost.model      import CatBoostPredictor
 from models.ordered_logit.model import OrderedLogitPredictor
@@ -193,10 +192,10 @@ def write_sheet(ws, rows, year):
     n       = len(rows)
     correct = sum(r['_correct'] for r in rows)
     acc     = correct / n
-    mean_ll = sum(r['Log-Loss'] for r in rows) / n
-    mean_rps= sum(r['RPS'] for r in rows) / n
-    base_rps= sum(rps({'home_win':1/3,'draw':1/3,'away_win':1/3},
-                      r['Actual']) for r in rows) / n
+    mean_ll = np.mean([r['Log-Loss'] for r in rows])
+    mean_rps= np.mean([r['RPS'] for r in rows])
+    base_rps= np.mean([rps({'home_win':1/3,'draw':1/3,'away_win':1/3},
+                           r['Actual']) for r in rows])
     base_ll = -np.log(1/3)
 
     subhdr_fill = PatternFill('solid', fgColor=SUBHDR)
@@ -209,9 +208,9 @@ def write_sheet(ws, rows, year):
         ws.cell(row=r, column=2, value=value)
 
     ws.cell(row=sep_row - 1, column=1, value='AGGREGATE METRICS').font = Font(bold=True, color='FF1F4E79', size=11)
-    metric_row(sep_row,     'Accuracy',        f'{acc:.1%}  ({correct}/{n})')
-    metric_row(sep_row + 1, 'Log-Loss',        f'{mean_ll:.4f}  (baseline: {base_ll:.4f})')
-    metric_row(sep_row + 2, 'RPS',             f'{mean_rps:.4f}  (baseline: {base_rps:.4f})')
+    metric_row(sep_row,     'Accuracy',  f'{acc:.1%}  ({correct}/{n})')
+    metric_row(sep_row + 1, 'Log-Loss',  f'{mean_ll:.4f}  (baseline: {base_ll:.4f})')
+    metric_row(sep_row + 2, 'RPS',       f'{mean_rps:.4f}  (baseline: {base_rps:.4f})')
 
     # By stage
     stage_row = sep_row + 4
@@ -252,7 +251,6 @@ def run():
 
     # Store per-model results: {model_name: [(year, rows), ...]}
     model_sheets = {
-        'Dixon-Coles': [],
         'XGBoost':     [],
         'CatBoost':    [],
         'Ord_Logit':   [],
@@ -284,13 +282,10 @@ def run():
         print(f'  Training rows: {len(train_df)}  |  WC matches: {len(wc_df)}')
 
         # Train
-        dc  = DixonColes(xi=0.0005)
-        dc.fit(train_df, ref_date=wc_start_ts)
-
-        xgb = XGBoostPredictor(draw_weight=0.65)
+        xgb = XGBoostPredictor(draw_weight=1)
         xgb.fit(train_df)
 
-        cb  = CatBoostPredictor(draw_weight=0.72)
+        cb  = CatBoostPredictor(draw_weight=0.67)
         cb.fit(train_df)
 
         ol  = OrderedLogitPredictor()
@@ -300,7 +295,6 @@ def run():
         mlp.fit(train_df)
 
         models = {
-            'Dixon-Coles': lambda m: dc.predict_outcome_probs(m['home_team'], m['away_team'], neutral=True),
             'XGBoost':     lambda m: xgb.predict_proba_row(m),
             'CatBoost':    lambda m: cb.predict_proba_row(m),
             'Ord_Logit':   lambda m: ol.predict_proba_row(m),
@@ -316,8 +310,8 @@ def run():
             model_sheets[name].append((year, rows))
             n       = len(rows)
             correct = sum(r['_correct'] for r in rows)
-            mean_ll = sum(r['Log-Loss'] for r in rows) / n
-            mean_rps= sum(r['RPS'] for r in rows) / n
+            mean_ll = float(np.mean([r['Log-Loss'] for r in rows]))
+            mean_rps= float(np.mean([r['RPS'] for r in rows]))
             all_agg[year][name] = {'accuracy': correct/n, 'log_loss': mean_ll, 'rps': mean_rps,
                                    'correct': correct, 'n': n}
             print(f'  {name:<14}  acc={correct/n:.1%} ({correct}/{n})  ll={mean_ll:.4f}  rps={mean_rps:.4f}')
@@ -328,7 +322,7 @@ def run():
         save_excel(model_name, sheets_data, out_dir)
 
     # ── Summary tables ─────────────────────────────────────────────────────────
-    model_names = ['Dixon-Coles', 'XGBoost', 'CatBoost', 'Ord_Logit', 'ML-Poisson', 'Ensemble']
+    model_names = ['XGBoost', 'CatBoost', 'Ord_Logit', 'ML-Poisson', 'Ensemble']
     years       = [y for y, _, _ in EDITIONS]
 
     for metric, label, fmt in [

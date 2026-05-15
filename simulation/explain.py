@@ -25,9 +25,9 @@ from models.catboost.model import CatBoostPredictor, _build_features, FEATURE_CO
 from simulation.dataset    import build as build_dataset
 
 # ── Match to explain ──────────────────────────────────────────────────────────
-HOME_TEAM  = 'Tunisia'
-AWAY_TEAM  = 'Netherlands'
-MATCH_DATE = '2026-06-25'    # set to None if not needed for disambiguation
+HOME_TEAM  = 'Colombia'
+AWAY_TEAM  = 'Portugal'
+MATCH_DATE = '2026-06-27'    # set to None if not needed for disambiguation
 # ─────────────────────────────────────────────────────────────────────────────
 
 WC26_START = pd.Timestamp('2026-06-11')
@@ -42,7 +42,7 @@ def _header(title, width=70):
 
 
 def explain_catboost(model, row):
-    _header("CatBoost  (draw_weight=0.72)")
+    _header("CatBoost  (draw_weight=0.65)")
 
     row_df = pd.DataFrame([row])
     X_row  = _build_features(row_df)[CB_COLS].fillna(0)
@@ -95,8 +95,8 @@ def run():
     print(f"  SHAP EXPLANATION: {HOME_TEAM} vs {AWAY_TEAM}  ({row['date'].date()})")
     print(f"{'#'*70}")
 
-    print("\nTraining CatBoost (draw_weight=0.72)...")
-    cb = CatBoostPredictor(draw_weight=0.72)
+    print("\nTraining CatBoost (draw_weight=0.65)...")
+    cb = CatBoostPredictor(draw_weight=0.65)
     cb.fit(train_df)
 
     explain_catboost(cb, row)
