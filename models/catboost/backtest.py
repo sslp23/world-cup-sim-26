@@ -50,7 +50,7 @@ def run():
     print(f"Training matches : {len(train_df)}")
     print(f"WC 2022 matches  : {len(wc22)}")
 
-    model = CatBoostPredictor(draw_weight=0.67)
+    model = CatBoostPredictor(draw_weight=0.70)
     model.fit(train_df)
 
     print("\nFeature importances:")

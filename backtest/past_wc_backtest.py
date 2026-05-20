@@ -282,16 +282,16 @@ def run():
         print(f'  Training rows: {len(train_df)}  |  WC matches: {len(wc_df)}')
 
         # Train
-        xgb = XGBoostPredictor(draw_weight=1)
+        xgb = XGBoostPredictor(draw_weight=0.68)
         xgb.fit(train_df)
 
-        cb  = CatBoostPredictor(draw_weight=0.67)
+        cb  = CatBoostPredictor(draw_weight=0.7)
         cb.fit(train_df)
 
         ol  = OrderedLogitPredictor()
         ol.fit(train_df)
 
-        mlp = MLPoissonModel(rho=-0.40)
+        mlp = MLPoissonModel(rho=-0.50)
         mlp.fit(train_df)
 
         models = {

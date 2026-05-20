@@ -37,7 +37,7 @@ def run(full_df: pd.DataFrame) -> list[dict]:
     print(f'WC26 dataset saved to data/wc_26_data.csv')
 
     print('Training CatBoost (draw_weight=0.67)...')
-    model = CatBoostPredictor(draw_weight=0.67)
+    model = CatBoostPredictor(draw_weight=0.7)
     model.fit(train_df)
 
     print('Predicting...')

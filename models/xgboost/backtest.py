@@ -63,7 +63,7 @@ def run():
     print(f"WC 2022 matches  : {len(wc22)}")
 
     # ── Fit model ─────────────────────────────────────────────────────────────
-    model = XGBoostPredictor(draw_weight=1)
+    model = XGBoostPredictor(draw_weight=0.67)
     model.fit(train_df)
 
     print("\nFeature importances:")

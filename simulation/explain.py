@@ -25,9 +25,9 @@ from models.catboost.model import CatBoostPredictor, _build_features, FEATURE_CO
 from simulation.dataset    import build as build_dataset
 
 # ── Match to explain ──────────────────────────────────────────────────────────
-HOME_TEAM  = 'Colombia'
-AWAY_TEAM  = 'Portugal'
-MATCH_DATE = '2026-06-27'    # set to None if not needed for disambiguation
+HOME_TEAM  = 'Brazil'
+AWAY_TEAM  = 'Morocco'
+MATCH_DATE = '2026-06-13'    # set to None if not needed for disambiguation
 # ─────────────────────────────────────────────────────────────────────────────
 
 WC26_START = pd.Timestamp('2026-06-11')
@@ -42,7 +42,7 @@ def _header(title, width=70):
 
 
 def explain_catboost(model, row):
-    _header("CatBoost  (draw_weight=0.65)")
+    _header("CatBoost  (draw_weight=0.70)")
 
     row_df = pd.DataFrame([row])
     X_row  = _build_features(row_df)[CB_COLS].fillna(0)
@@ -53,8 +53,7 @@ def explain_catboost(model, row):
 
     # CatBoost native SHAP — returns (n_samples, n_classes, n_features+1)
     # Axis 1 = class, axis 2 = features + bias (last column).
-    cat_cols  = ['confederation_home', 'confederation_away']
-    pool      = Pool(X_row, cat_features=cat_cols)
+    pool      = Pool(X_row)
     shap_vals = model.model.get_feature_importance(pool, type='ShapValues')
 
     class_names = ['home_win', 'draw', 'away_win']
@@ -95,8 +94,8 @@ def run():
     print(f"  SHAP EXPLANATION: {HOME_TEAM} vs {AWAY_TEAM}  ({row['date'].date()})")
     print(f"{'#'*70}")
 
-    print("\nTraining CatBoost (draw_weight=0.65)...")
-    cb = CatBoostPredictor(draw_weight=0.65)
+    print("\nTraining CatBoost (draw_weight=0.70)...")
+    cb = CatBoostPredictor(draw_weight=0.70)
     cb.fit(train_df)
 
     explain_catboost(cb, row)

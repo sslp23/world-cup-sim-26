@@ -28,6 +28,7 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 DIFF_COLS = [
     'points_dif',
     'elo_diff',
+    'wc_games_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
     'gw_ma20_diff',
@@ -53,6 +54,8 @@ def _build_features(df):
 
     feat['points_dif']    = df['points_dif']
     feat['elo_diff']      = df['elo_diff']
+
+    feat['wc_games_diff'] = df['home_wc_games'] - df['away_wc_games']
 
     feat['pww_ma20_diff'] = df['home_points_weighted_ma_20'] - df['away_points_weighted_ma_20']
     feat['pww_ma5_diff']  = df['home_points_weighted_ma_5']  - df['away_points_weighted_ma_5']

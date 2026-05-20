@@ -23,6 +23,7 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 DIFF_COLS = [
     'points_dif',
     'elo_diff',
+    'wc_games_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
     'gw_ma20_diff',
@@ -40,8 +41,8 @@ ABS_COLS = [
 ]
 
 NUMERIC_COLS     = DIFF_COLS + ABS_COLS
-CATEGORICAL_COLS = ['confederation_home', 'confederation_away']
-FEATURE_COLS     = NUMERIC_COLS + CATEGORICAL_COLS
+CATEGORICAL_COLS = []
+FEATURE_COLS     = NUMERIC_COLS
 
 
 def _build_features(df):
@@ -54,6 +55,8 @@ def _build_features(df):
 
     feat['points_dif']    = df['points_dif']
     feat['elo_diff']      = df['elo_diff']
+
+    feat['wc_games_diff'] = df['home_wc_games'] - df['away_wc_games']
 
     feat['pww_ma20_diff'] = df['home_points_weighted_ma_20'] - df['away_points_weighted_ma_20']
     feat['pww_ma5_diff']  = df['home_points_weighted_ma_5']  - df['away_points_weighted_ma_5']
@@ -70,9 +73,6 @@ def _build_features(df):
     feat['abs_elo_diff']   = df['elo_diff'].abs()
     feat['abs_points_dif'] = df['points_dif'].abs()
 
-    feat['confederation_home'] = df['confederation_home'].fillna('Unknown')
-    feat['confederation_away'] = df['confederation_away'].fillna('Unknown')
-
     return feat[FEATURE_COLS]
 
 
@@ -86,8 +86,6 @@ def _flip_features(X_df):
     X_flip = X_df.copy()
     for col in DIFF_COLS:
         X_flip[col] = -X_df[col]
-    X_flip['confederation_home'] = X_df['confederation_away']
-    X_flip['confederation_away'] = X_df['confederation_home']
     return X_flip
 
 
@@ -170,8 +168,6 @@ class CatBoostPredictor:
         print(f"Class distribution — home_win: {class_counts[0]}  draw: {class_counts[1]}  away_win: {class_counts[2]}")
         print(f"Class weights      — home_win: {class_weights[0]:.3f}  draw: {class_weights[1]:.3f}  away_win: {class_weights[2]:.3f}  (draw_weight={self.draw_weight})")
 
-        cat_indices = [FEATURE_COLS.index(c) for c in CATEGORICAL_COLS]
-
         self.model = CatBoostClassifier(
             iterations=self.iterations,
             learning_rate=self.learning_rate,
@@ -179,7 +175,6 @@ class CatBoostPredictor:
             loss_function='MultiClass',
             classes_count=3,
             random_seed=self.random_seed,
-            cat_features=cat_indices,
             verbose=0,
             train_dir=None,
         )

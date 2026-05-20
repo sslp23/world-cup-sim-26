@@ -133,6 +133,39 @@ class FeaturesCreator:
         df['confederation_home'] = df['home_team'].map(self.conf_map)
         df['confederation_away'] = df['away_team'].map(self.conf_map)
 
+        # ==================== WC HISTORY STATS ====================
+        # Total WC games played and goals scored per team across all history.
+        # Computed from the full international_results.csv — static lookup, not rolling.
+        wc_df = pd.read_csv('data/international_results.csv')
+        wc_df = wc_df[wc_df['tournament'] == 'FIFA World Cup'].dropna(
+            subset=['home_score', 'away_score'])
+        # Apply same name normalisations used in the ranked database
+        for col in ['home_team', 'away_team']:
+            wc_df[col] = (wc_df[col]
+                .str.replace('IR Iran',                          'Iran',                  regex=False)
+                .str.replace('Korea Republic',                   'South Korea',           regex=False)
+                .str.replace('USA',                              'United States',         regex=False)
+                .str.replace('Bosnia-Herzegovina',               'Bosnia and Herzegovina',regex=False)
+                .str.replace('Turkiye',                          'Turkey',                regex=False)
+                .str.replace('Democratic Republic of the Congo', 'DR Congo',              regex=False)
+                .str.replace('Czechia',                          'Czech Republic',        regex=False)
+            )
+            wc_df[col] = wc_df[col].str.replace('China(?! PR)', 'China PR', regex=True)
+
+        teams = set(wc_df['home_team']) | set(wc_df['away_team'])
+        wc_games = {}
+        wc_goals = {}
+        for team in teams:
+            h = wc_df[wc_df['home_team'] == team]
+            a = wc_df[wc_df['away_team'] == team]
+            wc_games[team] = len(h) + len(a)
+            wc_goals[team] = int(h['home_score'].sum() + a['away_score'].sum())
+
+        df['home_wc_games'] = df['home_team'].map(wc_games).fillna(0).astype(int)
+        df['home_wc_goals'] = df['home_team'].map(wc_goals).fillna(0).astype(int)
+        df['away_wc_games'] = df['away_team'].map(wc_games).fillna(0).astype(int)
+        df['away_wc_goals'] = df['away_team'].map(wc_goals).fillna(0).astype(int)
+
         # ==================== ROLLING / MOVING AVERAGE FEATURES ====================
         print("Calculating moving averages...")
         df = self._add_all_moving_averages_efficient(df)
