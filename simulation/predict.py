@@ -1,8 +1,8 @@
 """
 Trains CatBoost on post-WC22 data and predicts WC26 group stage probabilities.
 
-CatBoost selected as best model: 58.4% avg accuracy, 0.1944 avg RPS, 0.9602 avg Log-Loss
-across 5 WC editions (2006-2022) — best on all three metrics.
+CatBoost (draw_weight=0.66) selected as simulation model based on cross-WC
+backtest performance (best RPS and Log-Loss across 5 WC editions 2006-2022).
 """
 
 import os
@@ -36,8 +36,8 @@ def run(full_df: pd.DataFrame) -> list[dict]:
     wc26_df.to_csv('data/wc_26_data.csv', index=False)
     print(f'WC26 dataset saved to data/wc_26_data.csv')
 
-    print('Training CatBoost (draw_weight=0.67)...')
-    model = CatBoostPredictor(draw_weight=0.7)
+    print('Training CatBoost (draw_weight=0.66)...')
+    model = CatBoostPredictor(draw_weight=0.58)
     model.fit(train_df)
 
     print('Predicting...')

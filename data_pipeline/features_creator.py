@@ -118,6 +118,48 @@ class FeaturesCreator:
             )
             df['elo_diff'] = df['home_elo'] - df['away_elo']
 
+            # ── ELO momentum + historical peak/low ────────────────────────────
+            # Build a per-team ELO time series from the match-level ELO file.
+            # Each row in elo_df is the pre-match ELO (known before kickoff → no leakage).
+            elo_h = elo_df[['date', 'home_team', 'home_elo']].rename(
+                columns={'home_team': 'team', 'home_elo': 'elo'})
+            elo_a = elo_df[['date', 'away_team', 'away_elo']].rename(
+                columns={'away_team': 'team', 'away_elo': 'elo'})
+            elo_long = (
+                pd.concat([elo_h, elo_a], ignore_index=True)
+                .drop_duplicates(subset=['team', 'date'], keep='last')
+                .sort_values(['team', 'date'])
+                .reset_index(drop=True)
+            )
+
+            elo_feat_parts = []
+            for team, grp in elo_long.groupby('team', sort=False):
+                grp = grp.set_index('date').sort_index()
+                # Rolling mean ELO at multiple time horizons
+                grp['elo_ma_2yr'] = grp['elo'].rolling('730D',  min_periods=1).mean()
+                grp['elo_ma_4yr'] = grp['elo'].rolling('1461D', min_periods=1).mean()
+                grp['elo_ma_8yr'] = grp['elo'].rolling('2922D', min_periods=1).mean()
+                grp = grp.reset_index()
+                # Game-count momentum: ELO change over last 20 matches
+                grp['elo_delta_20'] = grp['elo'] - grp['elo'].shift(20)
+                elo_feat_parts.append(grp[['date', 'team',
+                                           'elo_delta_20',
+                                           'elo_ma_2yr', 'elo_ma_4yr', 'elo_ma_8yr']])
+
+            elo_long_feats = pd.concat(elo_feat_parts, ignore_index=True)
+
+            elo_cols = ['elo_delta_20', 'elo_ma_2yr', 'elo_ma_4yr', 'elo_ma_8yr']
+            df = df.merge(
+                elo_long_feats.rename(columns={'team': 'home_team'} |
+                                      {c: f'home_{c}' for c in elo_cols}),
+                on=['date', 'home_team'], how='left'
+            )
+            df = df.merge(
+                elo_long_feats.rename(columns={'team': 'away_team'} |
+                                      {c: f'away_{c}' for c in elo_cols}),
+                on=['date', 'away_team'], how='left'
+            )
+
         # ==================== PI-RATINGS ====================
         if pi_df is not None:
             pi_df = pi_df.copy()

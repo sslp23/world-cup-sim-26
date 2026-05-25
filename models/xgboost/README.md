@@ -48,13 +48,16 @@ See [features.md](../../features.md#model-feature-selection) for the full descri
 
 | Group | Features |
 | --- | --- |
-| Ratings | `points_dif`, `elo_diff`, `pi_diff` |
+| Ratings | `elo_diff`, `abs_elo_diff` |
+| ELO momentum | `elo_delta_20_diff` |
+| ELO history | `elo_ma_2yr_diff`, `elo_ma_4yr_diff`, `elo_ma_8yr_diff` |
+| WC experience | `wc_games_diff` |
 | Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
 | Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |
 | Weighted goals suffered | `gsw_ma20_diff`, `gsw_ma5_diff` |
 | Goal difference | `gd_ma20_diff`, `gd_ma5_diff` |
 
-`neutral` is excluded — the model is designed for neutral-venue prediction and augmentation/symmetrization handle venue invariance.
+`points_dif`, `abs_points_dif`, and `pi_diff` are excluded — see [`eda/README.md`](../../eda/README.md) for collinearity analysis. `neutral` is excluded — augmentation and symmetrized inference handle venue invariance.
 
 ## Files
 

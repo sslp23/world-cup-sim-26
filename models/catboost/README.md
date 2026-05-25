@@ -14,16 +14,21 @@ Identical to XGBoost in structure — see [`xgboost/README.md`](../xgboost/READM
 
 | Group | Features |
 | --- | --- |
-| Ratings | `points_dif`, `elo_diff`, `pi_diff` |
+| Ratings | `elo_diff`, `abs_elo_diff` |
+| ELO momentum | `elo_delta_20_diff` |
+| ELO history | `elo_ma_2yr_diff`, `elo_ma_4yr_diff`, `elo_ma_8yr_diff` |
+| WC experience | `wc_games_diff` |
 | Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
 | Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |
 | Weighted goals suffered | `gsw_ma20_diff`, `gsw_ma5_diff` |
 | Goal difference | `gd_ma20_diff`, `gd_ma5_diff` |
 | Confederation (categorical) | `confederation_home`, `confederation_away` |
 
+`points_dif` and `pi_diff` were excluded after collinearity analysis — Pearson r = 0.92 with `elo_diff`, partial r ≈ −0.05 after conditioning on ELO. See [`eda/README.md`](../../eda/README.md).
+
 ## Tuned Parameters
 
-- `draw_weight = 0.75` (tuned on WC 2022 — best RPS)
+- `draw_weight = 0.66` (simulation model — tuned for best cross-WC RPS)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
 ## Files

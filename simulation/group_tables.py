@@ -205,21 +205,21 @@ def _write_best_thirds_sheet(ws, all_thirds):
     ws.freeze_panes = 'A4'
 
 
-def _avg_win_prob(team, df):
-    """Average model win probability for a team across their group stage matches."""
-    probs = []
+def _opp_win_prob_sum(team, df):
+    """Sum of opponent win probabilities across a team's group matches (lower = better)."""
+    total = 0.0
     for _, row in df.iterrows():
         if row['Home'] == team:
-            probs.append(row['P(HW)'])
+            total += row['P(AW)']
         elif row['Away'] == team:
-            probs.append(row['P(AW)'])
-    return sum(probs) / len(probs) if probs else 0.0
+            total += row['P(HW)']
+    return total
 
 
 def _compute_all_thirds(df, elo_map):
     """
     Compute standing for every group, extract 3rd-place teams,
-    rank by Pts -> W -> avg win probability. Returns list of dicts sorted best to worst.
+    rank by Pts -> W -> opponent win prob sum (ascending). Returns list of dicts sorted best to worst.
     """
     all_groups_standings = {}
     for grp, teams in GROUPS.items():
@@ -233,17 +233,17 @@ def _compute_all_thirds(df, elo_map):
         t    = table[2]   # 3rd place row
         team = t['Team']
         thirds.append({
-            'grp':       grp,
-            'team':      team,
-            'mp':        t['MP'],
-            'w':         t['W'],
-            'd':         t['D'],
-            'l':         t['L'],
-            'pts':       t['Pts'],
-            'avg_p_win': _avg_win_prob(team, df),
+            'grp':         grp,
+            'team':        team,
+            'mp':          t['MP'],
+            'w':           t['W'],
+            'd':           t['D'],
+            'l':           t['L'],
+            'pts':         t['Pts'],
+            'opp_win_sum': _opp_win_prob_sum(team, df),
         })
 
-    thirds.sort(key=lambda x: (-x['pts'], -x['w'], -x['avg_p_win']))
+    thirds.sort(key=lambda x: (-x['pts'], -x['w'], x['opp_win_sum']))
     for i, t in enumerate(thirds, 1):
         t['pos'] = i
     return thirds

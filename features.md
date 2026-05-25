@@ -27,10 +27,6 @@
 - `home_points_won` / `away_points_won` — Points earned in the match (3=win, 1=draw, 0=loss)
 - `home_points_weighted` / `away_points_weighted` — Points scaled by opponent FIFA points: `points_won × (opponent_points / 1400)`. Results against stronger opponents earn more credit.
 
-### Strength Differential
-
-- `points_dif` — FIFA points difference between home and away team (`points_home - points_away`). Positive means home team is stronger.
-
 ### Tournament
 
 - `tournament` — Carried through from source data; used to derive `tournament_weight`.
@@ -99,13 +95,29 @@ The selected feature set follows a consistent pattern: one **long-window** (last
 
 #### Rating features
 
-Pre-computed ratings that summarise overall team quality. The three systems are complementary — FIFA points reflect official rankings, ELO captures head-to-head results history, and pi-ratings track goal difference dynamics.
+ELO captures the full head-to-head results history and is the strongest individual predictor. `abs_elo_diff` captures the size of the quality gap independently of direction, allowing the model to learn that large mismatches suppress draws.
 
 | Feature | Description |
 | --- | --- |
-| `points_dif` | FIFA ranking points difference (`points_home − points_away`) |
 | `elo_diff` | ELO rating difference (`home_elo − away_elo`) |
-| `pi_diff` | Pi-rating expected goal diff (`pi_h_home − pi_a_away`); positive = home team favoured |
+| `abs_elo_diff` | Absolute ELO difference — magnitude of quality gap, unchanged by team swap |
+
+#### ELO momentum and history
+
+Multi-horizon ELO features capture how a team's strength has evolved. These complement `elo_diff` (point-in-time) with trajectory and historical pedigree.
+
+| Feature | Description |
+| --- | --- |
+| `elo_delta_20_diff` | Difference of each team's ELO change over their last 20 games — positive = home team improving faster |
+| `elo_ma_2yr_diff` | 2-year rolling mean ELO difference — captures recent form cycle |
+| `elo_ma_4yr_diff` | 4-year rolling mean ELO difference — aligns with World Cup cycle |
+| `elo_ma_8yr_diff` | 8-year rolling mean ELO difference — historical pedigree of top nations |
+
+#### World Cup experience
+
+| Feature | Description |
+| --- | --- |
+| `wc_games_diff` | Difference in number of World Cup matches played historically |
 
 #### Weighted points won
 
@@ -143,19 +155,21 @@ Captures net dominance (attack minus defence combined) for each team. This is di
 | `gd_ma20_diff` | Difference of each team's average goal difference over last 20 games |
 | `gd_ma5_diff` | Difference of each team's average goal difference over last 5 games |
 
-#### Context
+#### Confederation (CatBoost only)
 
 | Feature | Description |
 | --- | --- |
-| `neutral` | Whether the match is at a neutral venue (1/0). Reduces implicit home advantage signal. |
+| `confederation_home` / `confederation_away` | Football confederation (UEFA, CONMEBOL, CAF, AFC, CONCACAF, OFC). Passed as native categorical to CatBoost; not used in XGBoost or ML-Poisson. |
 
 ### Excluded features
 
 | Feature group | Reason for exclusion |
 | --- | --- |
+| `points_dif` / `abs_points_dif` | Pearson r = 0.92 with `elo_diff`; partial r = −0.05 after conditioning on ELO — near-zero independent signal. See [`eda/README.md`](eda/README.md). |
+| `pi_diff` / `pi_neutral_diff` | Pearson r = 0.90 with `elo_diff`; partial r = −0.05. Also conflates home/away venue context which is irrelevant at neutral WC venues. |
 | Raw (non-weighted) goals / points won | Pearson r ≈ 0.97 with weighted equivalents; weighted version subsumes them |
 | `form_trend_5` / `form_trend_3` | Near-zero mutual information; no predictive power |
 | `days_since_last_match` | Near-zero mutual information at the dataset level |
 | `tournament_weight` | No predictive power on its own |
-| `confederation_home` / `confederation_away` | Very small effect (Cramér's V ≈ 0.07–0.09); information already encoded in rating features |
+| `neutral` | Model is designed for neutral-venue prediction; augmentation and symmetrized inference handle venue invariance |
 | Windows ma_10 / ma_3 | Highly correlated with ma_20/ma_5 (r > 0.86); keeping two windows is sufficient |

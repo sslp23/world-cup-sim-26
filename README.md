@@ -52,21 +52,17 @@ See [eda/README.md](eda/README.md) for the exploratory data analysis — feature
 
 #### Static (per match)
 
-- `tournament_weight` — competition importance weight (1.0 WC, 0.8 qualifiers, 0.9 other competitive, 0.5 friendlies)
-- `points_dif` — FIFA points difference between home and away team (positive = home stronger)
 - `home_elo` / `away_elo` / `elo_diff` — ELO ratings computed from full match history (eloratings.net formula)
-- `confederation_home` / `confederation_away` — football confederation per team
+- `elo_delta_20` — ELO change over the team's last 20 games (momentum)
+- `elo_ma_2yr` / `elo_ma_4yr` / `elo_ma_8yr` — 2/4/8-year rolling mean ELO (form cycle, WC cycle, historical pedigree)
+- `confederation_home` / `confederation_away` — football confederation per team (CatBoost only)
 - `neutral` / `tournament` — carried through from source data
 
-#### Rolling (per team, last 20, 10, 5 and 3 games, leak-free)
+#### Rolling (per team, last 20 and 5 games, leak-free)
 
-- `points_won_ma` — average points earned
 - `points_weighted_ma` — points weighted by opponent FIFA points (normalized by 1400)
-- `goals_ma` / `goals_suffered_ma` — goals scored and conceded
 - `goals_weighted_ma` / `goals_suffered_weighted_ma` — goals weighted by opponent strength
 - `goal_diff_ma` — average goal difference
-- `form_trend` — linear slope of points_won (positive = improving, negative = declining)
-- `days_since_last_match` — rest/fatigue indicator
 
 ## ELO Rating System
 
@@ -129,9 +125,11 @@ wc_26_ml/
 │   └── output/              # Per-match Excel results (one file per model)
 ├── simulation/
 │   ├── dataset.py           # Builds post-WC22 training set + WC26 group stage rows
-│   ├── predict.py           # Trains CatBoost on post-WC22 data, predicts WC26
+│   ├── predict.py           # Trains CatBoost on post-WC22 data, predicts WC26 group stage
+│   ├── group_tables.py      # Writes group table tabs + best 3rd-place ranking to Excel
+│   ├── playoff.py           # Simulates knockout bracket and writes round tabs to Excel
 │   ├── explain.py           # SHAP explanation for a single WC26 match (CatBoost)
-│   └── output/              # wc_26_sim.xlsx — full group stage predictions
+│   └── output/              # wc_26_sim.xlsx — full tournament simulation output
 ├── experiments/             # Ad-hoc tests (training window size, dataset builder)
 └── data/
     ├── international_results.csv

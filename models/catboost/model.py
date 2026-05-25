@@ -21,8 +21,11 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 
 # Signed difference features — negated when teams are swapped during augmentation.
 DIFF_COLS = [
-    'points_dif',
     'elo_diff',
+    'elo_delta_20_diff',
+    'elo_ma_2yr_diff',
+    'elo_ma_4yr_diff',
+    'elo_ma_8yr_diff',
     'wc_games_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
@@ -35,14 +38,15 @@ DIFF_COLS = [
 ]
 
 # Absolute-value features — magnitude of quality gap, unchanged by team swap.
+# points_dif excluded: Pearson r=0.92 with elo_diff, partial r=-0.05 after conditioning
+# on elo_diff — near-zero independent signal. See eda/collinearity_points_elo.py.
 ABS_COLS = [
     'abs_elo_diff',
-    'abs_points_dif',
 ]
 
 NUMERIC_COLS     = DIFF_COLS + ABS_COLS
-CATEGORICAL_COLS = []
-FEATURE_COLS     = NUMERIC_COLS
+CATEGORICAL_COLS = ['confederation_home', 'confederation_away']
+FEATURE_COLS     = NUMERIC_COLS + CATEGORICAL_COLS
 
 
 def _build_features(df):
@@ -53,8 +57,11 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['points_dif']    = df['points_dif']
-    feat['elo_diff']      = df['elo_diff']
+    feat['elo_diff']          = df['elo_diff']
+    feat['elo_delta_20_diff'] = df['home_elo_delta_20'] - df['away_elo_delta_20']
+    feat['elo_ma_2yr_diff']   = df['home_elo_ma_2yr']   - df['away_elo_ma_2yr']
+    feat['elo_ma_4yr_diff']   = df['home_elo_ma_4yr']   - df['away_elo_ma_4yr']
+    feat['elo_ma_8yr_diff']   = df['home_elo_ma_8yr']   - df['away_elo_ma_8yr']
 
     feat['wc_games_diff'] = df['home_wc_games'] - df['away_wc_games']
 
@@ -71,7 +78,9 @@ def _build_features(df):
     feat['gd_ma5_diff']   = df['home_goal_diff_ma_5']  - df['away_goal_diff_ma_5']
 
     feat['abs_elo_diff']   = df['elo_diff'].abs()
-    feat['abs_points_dif'] = df['points_dif'].abs()
+
+    feat['confederation_home'] = df['confederation_home'].fillna('Unknown')
+    feat['confederation_away'] = df['confederation_away'].fillna('Unknown')
 
     return feat[FEATURE_COLS]
 
@@ -86,6 +95,8 @@ def _flip_features(X_df):
     X_flip = X_df.copy()
     for col in DIFF_COLS:
         X_flip[col] = -X_df[col]
+    X_flip['confederation_home'] = X_df['confederation_away']
+    X_flip['confederation_away'] = X_df['confederation_home']
     return X_flip
 
 
@@ -168,12 +179,14 @@ class CatBoostPredictor:
         print(f"Class distribution — home_win: {class_counts[0]}  draw: {class_counts[1]}  away_win: {class_counts[2]}")
         print(f"Class weights      — home_win: {class_weights[0]:.3f}  draw: {class_weights[1]:.3f}  away_win: {class_weights[2]:.3f}  (draw_weight={self.draw_weight})")
 
+        cat_indices = [FEATURE_COLS.index(c) for c in CATEGORICAL_COLS]
         self.model = CatBoostClassifier(
             iterations=self.iterations,
             learning_rate=self.learning_rate,
             depth=self.depth,
             loss_function='MultiClass',
             classes_count=3,
+            cat_features=cat_indices,
             random_seed=self.random_seed,
             verbose=0,
             train_dir=None,
@@ -190,7 +203,7 @@ class CatBoostPredictor:
 
         X_fwd = _build_features(pd.DataFrame([row])).reset_index(drop=True)
 
-        # Fill numeric NaNs with 0 for sparse teams
+        # Fill NaNs — numeric with 0, categorical already filled in _build_features
         for col in NUMERIC_COLS:
             X_fwd[col] = X_fwd[col].fillna(0)
 

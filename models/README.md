@@ -73,9 +73,9 @@ See [`xgboost/README.md`](xgboost/README.md) for design details.
 - `draw_weight = 0.65` — draw class weight multiplier (tuned on WC 2022)
 - `n_estimators = 500`, `learning_rate = 0.05`, `max_depth = 4`
 
-**Features:** Signed difference features (home − away) for ELO, FIFA points, weighted goals, weighted points won, goal difference; plus `abs_elo_diff` and `abs_points_dif` to capture the size of the quality gap independently of direction.
+**Features:** ELO-based ratings (`elo_diff`, `abs_elo_diff`), ELO momentum (`elo_delta_20_diff`), multi-horizon ELO means (`elo_ma_2yr/4yr/8yr_diff`), WC experience (`wc_games_diff`), and weighted form features (points won, goals scored/suffered, goal difference over 20 and 5 games). `points_dif` and `pi_diff` excluded after collinearity analysis.
 
-**Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.
+**Training data:** All ranked matches (2018–2022) with ELO features available.
 
 **Strengths:** Incorporates all rating systems (ELO, FIFA points) and form features simultaneously. Learns non-linear interactions between features.
 
@@ -140,11 +140,11 @@ See [`catboost/README.md`](catboost/README.md) for design details.
 - `draw_weight = 0.72` — draw class weight multiplier (tuned on WC 2022)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
-**Features:** Same signed difference features as XGBoost, plus `abs_elo_diff` and `abs_points_dif` (quality gap magnitude), and `confederation_home` / `confederation_away` as native categorical features.
+**Features:** ELO-based ratings (`elo_diff`, `abs_elo_diff`), ELO momentum (`elo_delta_20_diff`), multi-horizon ELO means (`elo_ma_2yr/4yr/8yr_diff`), WC experience (`wc_games_diff`), weighted form features (points won, goals scored/suffered, goal difference over 20 and 5 games), and `confederation_home` / `confederation_away` as native categorical features. `points_dif` and `pi_diff` excluded after collinearity analysis (partial r ≈ −0.05 after conditioning on ELO).
 
-**Training data:** All ranked matches (2018–2022) with ELO and pi-ratings available.
+**Training data:** All ranked matches (2018–2022) with ELO features available.
 
-**Strengths:** Best overall performer across all three metrics (accuracy, RPS, Log-Loss) in the cross-WC evaluation. Handles categorical confederation features natively without one-hot encoding. The `abs` features allow the model to learn that large quality gaps suppress draws regardless of which team is stronger.
+**Strengths:** Best RPS in the cross-WC evaluation — best probability calibration. Handles categorical confederation features natively without one-hot encoding. `abs_elo_diff` allows the model to learn that large quality gaps suppress draws regardless of which team is stronger.
 
 **Limitations:** Black-box. Does not model score distributions, only outcome probabilities.
 

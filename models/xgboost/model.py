@@ -26,8 +26,11 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 
 # Signed difference features — negated when teams are swapped during augmentation.
 DIFF_COLS = [
-    'points_dif',
     'elo_diff',
+    'elo_delta_20_diff',
+    'elo_ma_2yr_diff',
+    'elo_ma_4yr_diff',
+    'elo_ma_8yr_diff',
     'wc_games_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
@@ -40,7 +43,9 @@ DIFF_COLS = [
 ]
 
 # Absolute-value features — magnitude of quality gap, unchanged by team swap.
-ABS_COLS = ['abs_elo_diff', 'abs_points_dif']
+# points_dif excluded: Pearson r=0.92 with elo_diff, partial r=-0.05 after conditioning
+# on elo_diff — near-zero independent signal. See eda/collinearity_points_elo.py.
+ABS_COLS = ['abs_elo_diff']
 
 FEATURE_COLS = DIFF_COLS + ABS_COLS
 
@@ -52,8 +57,11 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['points_dif']    = df['points_dif']
-    feat['elo_diff']      = df['elo_diff']
+    feat['elo_diff']          = df['elo_diff']
+    feat['elo_delta_20_diff'] = df['home_elo_delta_20'] - df['away_elo_delta_20']
+    feat['elo_ma_2yr_diff']   = df['home_elo_ma_2yr']   - df['away_elo_ma_2yr']
+    feat['elo_ma_4yr_diff']   = df['home_elo_ma_4yr']   - df['away_elo_ma_4yr']
+    feat['elo_ma_8yr_diff']   = df['home_elo_ma_8yr']   - df['away_elo_ma_8yr']
 
     feat['wc_games_diff'] = df['home_wc_games'] - df['away_wc_games']
 
@@ -70,7 +78,6 @@ def _build_features(df):
     feat['gd_ma5_diff']   = df['home_goal_diff_ma_5']  - df['away_goal_diff_ma_5']
 
     feat['abs_elo_diff']   = df['elo_diff'].abs()
-    feat['abs_points_dif'] = df['points_dif'].abs()
 
     return feat[FEATURE_COLS]
 

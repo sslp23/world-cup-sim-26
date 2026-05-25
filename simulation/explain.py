@@ -1,7 +1,7 @@
 """
 SHAP explanation for a WC 2026 group stage prediction.
 
-Breaks down the CatBoost (draw_weight=0.72) prediction for a given match,
+Breaks down the CatBoost (draw_weight=0.66) prediction for a given match,
 showing which features drove the model's output.
 
 Parameters (edit below):
@@ -42,18 +42,21 @@ def _header(title, width=70):
 
 
 def explain_catboost(model, row):
-    _header("CatBoost  (draw_weight=0.70)")
+    _header("CatBoost  (draw_weight=0.66)")
 
+    from models.catboost.model import CATEGORICAL_COLS, NUMERIC_COLS
     row_df = pd.DataFrame([row])
-    X_row  = _build_features(row_df)[CB_COLS].fillna(0)
+    X_row  = _build_features(row_df)[CB_COLS]
+    for col in NUMERIC_COLS:
+        X_row[col] = X_row[col].fillna(0)
 
     probs = model.predict_proba_row(row)
     pred  = max(probs, key=probs.get)
     print(f"  P(HW)={probs['home_win']:.3f}  P(D)={probs['draw']:.3f}  P(AW)={probs['away_win']:.3f}  => {pred}")
 
     # CatBoost native SHAP — returns (n_samples, n_classes, n_features+1)
-    # Axis 1 = class, axis 2 = features + bias (last column).
-    pool      = Pool(X_row)
+    cat_indices = [CB_COLS.index(c) for c in CATEGORICAL_COLS]
+    pool      = Pool(X_row, cat_features=cat_indices)
     shap_vals = model.model.get_feature_importance(pool, type='ShapValues')
 
     class_names = ['home_win', 'draw', 'away_win']
@@ -94,8 +97,8 @@ def run():
     print(f"  SHAP EXPLANATION: {HOME_TEAM} vs {AWAY_TEAM}  ({row['date'].date()})")
     print(f"{'#'*70}")
 
-    print("\nTraining CatBoost (draw_weight=0.70)...")
-    cb = CatBoostPredictor(draw_weight=0.70)
+    print("\nTraining CatBoost (draw_weight=0.66)...")
+    cb = CatBoostPredictor(draw_weight=0.66)
     cb.fit(train_df)
 
     explain_catboost(cb, row)

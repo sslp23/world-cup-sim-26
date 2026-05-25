@@ -53,14 +53,8 @@ Home teams score more and have fewer blanks — home advantage is real in the tr
 Same pattern as the classifier EDA:
 
 - Raw and weighted versions of the same metric are nearly identical (r ≈ 0.95–0.97) — keep only weighted versions.
-- Among ratings, `elo_diff` ↔ `points_dif` (r = 0.923) — keep `elo_diff` and `pi_neutral_diff`, drop `points_dif`.
+- `elo_diff` ↔ `points_dif` (r = 0.923), `elo_diff` ↔ `pi_neutral_diff` (r ≈ 0.90) — both have partial r ≈ −0.05 after conditioning on ELO. Keep only `elo_diff`; drop `points_dif` and `pi_neutral_diff`.
 - `ma5`, `ma10`, `ma20` windows are highly collinear (r > 0.86) — keeping two windows (ma5 + ma20) is sufficient.
-
-### Why `pi_neutral_diff` instead of `pi_diff`
-
-Pi-ratings assign two values per team: `pi_h` (built from home results) and `pi_a` (built from away results). The raw `pi_diff = pi_h_home − pi_a_away` encodes home/away venue context: a team that plays many home games gets an inflated `pi_h`, and a team that plays hard away qualifiers gets a deflated `pi_a`.
-
-For WC matches (all neutral venues), this venue bias is irrelevant and misleading. `pi_neutral_diff = avg(pi_h, pi_a) of attacker − avg(pi_h, pi_a) of defender` removes this bias by averaging out the home/away context from each team's rating before taking the difference.
 
 ## Selected Feature Set
 
@@ -68,8 +62,11 @@ All features are expressed from the **attacker's perspective** — a single regr
 
 | Group | Features | Notes |
 | --- | --- | --- |
-| Ratings | `elo_diff`, `pi_neutral_diff` | Negated for away attacker; `points_dif` excluded (collinear with `elo_diff`) |
+| Ratings | `elo_diff`, `abs_elo_diff` | `elo_diff` negated for away attacker; `abs_elo_diff` unchanged (magnitude is symmetric) |
+| ELO momentum | `elo_delta_20_diff` | Negated for away attacker |
+| ELO history | `elo_ma_2yr_diff`, `elo_ma_4yr_diff`, `elo_ma_8yr_diff` | 2/4/8-year rolling mean ELO difference; negated for away attacker |
+| WC experience | `wc_games_diff` | Negated for away attacker |
 | Attacker form | `att_gw_ma20`, `att_gw_ma5`, `att_pww_ma20` | Attacker's weighted goals scored and points won |
 | Defender form | `def_gsw_ma20`, `def_gsw_ma5`, `def_gd_ma20` | Defender's weighted goals conceded and goal difference |
 
-For away attacker: `elo_diff` and `pi_neutral_diff` are negated (positive = away team is stronger); `att_*` features use away team stats; `def_*` features use home team stats.
+`points_dif` and `pi_neutral_diff` excluded — collinear with `elo_diff` (partial r ≈ −0.05). For away attacker: rating diffs are negated; `att_*` features use away team stats; `def_*` features use home team stats.
