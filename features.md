@@ -109,9 +109,9 @@ Multi-horizon ELO features capture how a team's strength has evolved. These comp
 | Feature | Description |
 | --- | --- |
 | `elo_delta_20_diff` | Difference of each team's ELO change over their last 20 games — positive = home team improving faster |
-| `elo_ma_2yr_diff` | 2-year rolling mean ELO difference — captures recent form cycle |
-| `elo_ma_4yr_diff` | 4-year rolling mean ELO difference — aligns with World Cup cycle |
-| `elo_ma_8yr_diff` | 8-year rolling mean ELO difference — historical pedigree of top nations |
+| `elo_ma_8yr_diff` | 8-year rolling mean ELO difference — historical pedigree; most distinct from current ELO (r=0.94 vs 0.97–0.98 for shorter windows) |
+
+`elo_ma_2yr_diff` and `elo_ma_4yr_diff` were excluded after collinearity analysis — Pearson r = 0.97–0.98 with `elo_diff`, near-identical to current ELO because ratings change slowly. Partial r ≈ −0.04 after conditioning on `elo_diff`. See `eda/elo_features_analysis.py`.
 
 #### World Cup experience
 

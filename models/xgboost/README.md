@@ -11,6 +11,7 @@ All features are expressed as `home_team_value − away_team_value`. This is the
 ### 2. Augmented training (flip augmentation)
 
 Every match in the training set is included twice:
+
 - **Forward**: original features + original outcome
 - **Flipped**: negated features + swapped outcome (home_win ↔ away_win, draw stays draw)
 
@@ -20,7 +21,7 @@ Negating all difference features is equivalent to swapping the two teams. This f
 
 At prediction time, each match is predicted twice — forward and with teams swapped (features negated) — and the results are averaged:
 
-```
+```text
 P(team_A wins) = (P(home_win | forward) + P(away_win | inverted)) / 2
 P(draw)        = (P(draw | forward)     + P(draw | inverted))     / 2
 P(team_B wins) = (P(away_win | forward) + P(home_win | inverted)) / 2
@@ -50,7 +51,7 @@ See [features.md](../../features.md#model-feature-selection) for the full descri
 | --- | --- |
 | Ratings | `elo_diff`, `abs_elo_diff` |
 | ELO momentum | `elo_delta_20_diff` |
-| ELO history | `elo_ma_2yr_diff`, `elo_ma_4yr_diff`, `elo_ma_8yr_diff` |
+| ELO history | `elo_ma_8yr_diff` |
 | WC experience | `wc_games_diff` |
 | Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
 | Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |

@@ -28,9 +28,7 @@ FEATURE_COLS = [
     'abs_elo_diff',
     # ELO momentum — signed: positive = attacker improving faster than defender
     'elo_delta_20_diff',
-    # Multi-horizon ELO means — recent form, WC cycle, and historical pedigree
-    'elo_ma_2yr_diff',
-    'elo_ma_4yr_diff',
+    # 8-year ELO mean — historical pedigree, most distinct from current elo_diff
     'elo_ma_8yr_diff',
     # WC history — attacker advantage in tournament experience
     'wc_games_diff',
@@ -59,8 +57,6 @@ def _build_attacker_features(df, attacker='home'):
         feat['elo_diff']           = df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
         feat['elo_delta_20_diff'] = df['home_elo_delta_20'] - df['away_elo_delta_20']
-        feat['elo_ma_2yr_diff']   = df['home_elo_ma_2yr']   - df['away_elo_ma_2yr']
-        feat['elo_ma_4yr_diff']   = df['home_elo_ma_4yr']   - df['away_elo_ma_4yr']
         feat['elo_ma_8yr_diff']   = df['home_elo_ma_8yr']   - df['away_elo_ma_8yr']
         feat['wc_games_diff']      = df['home_wc_games'] - df['away_wc_games']
         feat['att_gw_ma20']        = df['home_goals_weighted_ma_20']
@@ -73,8 +69,6 @@ def _build_attacker_features(df, attacker='home'):
         feat['elo_diff']           = -df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
         feat['elo_delta_20_diff'] = df['away_elo_delta_20'] - df['home_elo_delta_20']
-        feat['elo_ma_2yr_diff']   = df['away_elo_ma_2yr']   - df['home_elo_ma_2yr']
-        feat['elo_ma_4yr_diff']   = df['away_elo_ma_4yr']   - df['home_elo_ma_4yr']
         feat['elo_ma_8yr_diff']   = df['away_elo_ma_8yr']   - df['home_elo_ma_8yr']
         feat['wc_games_diff']      = df['away_wc_games'] - df['home_wc_games']
         feat['att_gw_ma20']        = df['away_goals_weighted_ma_20']

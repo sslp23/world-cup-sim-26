@@ -33,6 +33,14 @@ All continuous features are expressed as **difference features** (home team valu
 
 **Decision: `points_dif` and `abs_points_dif` removed from all models.** ELO subsumes FIFA points; keeping both inflates VIF without adding predictive value.
 
+### ELO multi-horizon means collinearity (see `elo_features_analysis.py`)
+
+`elo_ma_2yr_diff` and `elo_ma_4yr_diff` have Pearson r = 0.97–0.98 with `elo_diff` — near-identical to current ELO because ratings change slowly. Partial r ≈ −0.04 (near-zero). VIF = 120–175 (severe).
+
+`elo_ma_8yr_diff` is the most distinct (r = 0.94, VIF = 39, partial r = −0.079) and has the best individual log-loss improvement (−0.003 over elo_diff baseline).
+
+**Decision: keep only `elo_ma_8yr_diff`.** The 2yr and 4yr means are subsumed by current ELO; the 8yr mean captures historical pedigree with meaningful independent signal.
+
 - **Long-window moving averages (20 games)** are consistently more predictive than short-window ones (3 games), since they capture a team's true level rather than short-term noise.
 - **`form_trend`** (linear slope of recent
  points) and **`days_since_last_match`** show near-zero MI and weak Spearman correlation — excluded from the model feature set.
