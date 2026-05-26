@@ -16,9 +16,10 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-OUTPUT_DIR = 'backtest/output'
-SHEETS     = ['WC 22', 'WC 18', 'WC 14', 'WC 10', 'WC 06']
-EDITIONS   = ['WC22',  'WC18',  'WC14',  'WC10',  'WC06']
+OUTPUT_DIR     = 'backtest/output'
+SHEETS         = ['WC 22', 'WC 18', 'WC 14', 'WC 10', 'WC 06']
+EDITIONS       = ['WC22',  'WC18',  'WC14',  'WC10',  'WC06']
+EXCLUDE_MODELS = {'Dixon-Coles'}
 
 # Colours
 HDR_SECTION = 'FF1F4E79'   # dark blue — section title (ACCURACY / LOG-LOSS / RPS)
@@ -111,6 +112,8 @@ def run():
     records = []
     for xlsx_path in xlsx_files:
         model_name  = os.path.splitext(os.path.basename(xlsx_path))[0]
+        if model_name in EXCLUDE_MODELS:
+            continue
         edition_dfs = read_model_results(xlsx_path)
         if not edition_dfs:
             continue
@@ -145,6 +148,13 @@ def run():
     print("  " + "-" * 70)
     for r in acc_table:
         print(f"  {r['Model']:<16}  " + "  ".join(f"{r[ed]:>6.1%}" for ed in EDITIONS) + f"  {r['Avg']:>6.1%}")
+
+    ll_table = build_table(records, 'log_loss', None)
+    print(f"\n{'LOG-LOSS'}")
+    print(f"  {'Model':<16}  " + "  ".join(f"{ed:>7}" for ed in EDITIONS) + f"  {'Avg':>7}")
+    print("  " + "-" * 70)
+    for r in ll_table:
+        print(f"  {r['Model']:<16}  " + "  ".join(f"{r[ed]:>7.4f}" for ed in EDITIONS) + f"  {r['Avg']:>7.4f}")
 
     rps_table = build_table(records, 'rps', None)
     print(f"\n{'RPS'}")

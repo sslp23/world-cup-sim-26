@@ -83,14 +83,13 @@ Averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
 
 | Model | Avg Accuracy | Avg RPS | Avg Log-Loss |
 | --- | --- | --- | --- |
-| **CatBoost** | 55.6% | **0.1960** | 0.9676 |
-| Dixon-Coles | 55.6% | 0.1963 | **0.9641** |
-| Ensemble (XGB + CB + MLP) | **58.4%** | 0.1965 | 0.9725 |
-| ML-Poisson | 56.3% | 0.1974 | 0.9813 |
+| Ensemble (XGB + CB + MLP) | **58.4%** | 0.1966 | 0.9775 |
 | Ordered Logit | 57.8% | 0.1995 | 0.9714 |
-| XGBoost | 55.3% | 0.2023 | 1.0019 |
+| ML-Poisson | 56.9% | 0.1978 | **0.9707** |
+| **CatBoost** | 56.6% | **0.1956** | 0.9746 |
+| XGBoost | 54.7% | 0.2029 | 1.0230 |
 
-CatBoost leads on RPS (best probability calibration); Dixon-Coles leads on Log-Loss; Ensemble leads on accuracy. Dixon-Coles is not re-run in the automated batch (too slow) but its output from a previous run is included above.
+CatBoost leads on RPS (best probability calibration); ML-Poisson leads on Log-Loss; Ensemble leads on accuracy.
 
 See [`backtest/output/`](backtest/output/) for per-match Excel results per model and WC edition.
 

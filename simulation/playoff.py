@@ -488,10 +488,10 @@ def run():
     for mid, team in sorted(thirds_assign.items()):
         print(f'  Match {mid}: {team}')
 
-    print('\nLoading dataset and training CatBoost (draw_weight=0.66)...')
+    print('\nLoading dataset and training CatBoost (draw_weight=0.62)...')
     full_df  = build_dataset()
     train_df = full_df[full_df['date'] < WC26_START].reset_index(drop=True)
-    model    = CatBoostPredictor(draw_weight=0.58)
+    model    = CatBoostPredictor(draw_weight=0.62)
     model.fit(train_df)
 
     print('Building team profiles...')
