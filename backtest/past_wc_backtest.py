@@ -31,6 +31,7 @@ from models.xgboost.model       import XGBoostPredictor
 from models.catboost.model      import CatBoostPredictor
 from models.ordered_logit.model import OrderedLogitPredictor
 from models.ml_poisson.model    import MLPoissonModel
+from config import XGB_DRAW_WEIGHT, CB_DRAW_WEIGHT, MLP_RHO
 
 EDITIONS = [
     (2022, '2022-11-20', '2022-12-18'),
@@ -282,16 +283,16 @@ def run():
         print(f'  Training rows: {len(train_df)}  |  WC matches: {len(wc_df)}')
 
         # Train
-        xgb = XGBoostPredictor(draw_weight=0.68)
+        xgb = XGBoostPredictor(draw_weight=XGB_DRAW_WEIGHT)
         xgb.fit(train_df)
 
-        cb  = CatBoostPredictor(draw_weight=0.62)
+        cb  = CatBoostPredictor(draw_weight=CB_DRAW_WEIGHT)
         cb.fit(train_df)
 
         ol  = OrderedLogitPredictor()
         ol.fit(train_df)
 
-        mlp = MLPoissonModel(rho=-0.2)
+        mlp = MLPoissonModel(rho=MLP_RHO)
         mlp.fit(train_df)
 
         models = {

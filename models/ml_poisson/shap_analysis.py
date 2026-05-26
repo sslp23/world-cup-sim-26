@@ -15,6 +15,7 @@ import pandas as pd
 import shap
 
 from models.ml_poisson.model import MLPoissonModel
+from config import MLP_RHO
 from models.ml_poisson.regressor import _build_attacker_features, FEATURE_COLS
 
 WC_2022_START = pd.Timestamp('2022-11-20')
@@ -26,7 +27,7 @@ def explain_match(full_df, train_df, home_team, away_team, match_date=None):
     Shows feature contributions to lambda_home and lambda_away.
     """
     # Train
-    model = MLPoissonModel(rho=-0.13)
+    model = MLPoissonModel(rho=MLP_RHO)
     model.fit(train_df)
     xgb = model.regressor.model  # underlying XGBRegressor
 

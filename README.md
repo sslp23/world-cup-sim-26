@@ -53,7 +53,6 @@ See [eda/README.md](eda/README.md) for the exploratory data analysis — feature
 #### Static (per match)
 
 - `home_elo` / `away_elo` / `elo_diff` — ELO ratings computed from full match history (eloratings.net formula)
-- `elo_delta_20` — ELO change over the team's last 20 games (momentum)
 - `elo_ma_2yr` / `elo_ma_4yr` / `elo_ma_8yr` — 2/4/8-year rolling mean ELO (form cycle, WC cycle, historical pedigree)
 - `confederation_home` / `confederation_away` — football confederation per team (CatBoost only)
 - `neutral` / `tournament` — carried through from source data

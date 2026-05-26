@@ -6,7 +6,7 @@ Flow:
   1. Load group stage predictions from wc_26_sim.xlsx
   2. Compute group standings (Pts → W → ELO tiebreak)
   3. Pick the 8 best 3rd-place teams, allocate to R32 slots
-  4. Re-train CatBoost (draw_weight=0.66) on post-WC22 data
+  4. Re-train CatBoost on post-WC22 data (draw_weight from config.py)
   5. Build team feature profiles from wc_26_data.csv
   6. Simulate R32 → R16 → QF → SF → Final with symmetrized inference
      Draws resolved by relative strength (P_win / (P_win + P_loss))
@@ -26,6 +26,7 @@ from openpyxl.utils import get_column_letter
 
 from models.catboost.model import CatBoostPredictor
 from simulation.dataset    import build as build_dataset
+from config import CB_DRAW_WEIGHT
 
 XLSX_PATH  = 'simulation/output/wc_26_sim.xlsx'
 WC26_START = pd.Timestamp('2026-06-11')
@@ -103,22 +104,22 @@ def _border():
 
 # ── Group standings ───────────────────────────────────────────────────────────
 
-def _opp_win_prob_sum(team, pred_df):
-    """Sum of opponent win probabilities across a team's group matches (lower = better)."""
+def _win_prob_sum(team, pred_df):
+    """Sum of the team's own win probabilities across group matches (higher = better)."""
     total = 0.0
     for _, row in pred_df.iterrows():
         if row['Home'] == team:
-            total += row['P(AW)']
-        elif row['Away'] == team:
             total += row['P(HW)']
+        elif row['Away'] == team:
+            total += row['P(AW)']
     return total
 
 
 def compute_standings(pred_df):
     """
-    Return {group: [(team, pts, wins, opp_win_sum), ...]} sorted 1→4.
+    Return {group: [(team, pts, wins, win_prob_sum), ...]} sorted 1→4.
 
-    Tiebreaker: Pts → W → opponent win prob sum (ascending — lower is better).
+    Tiebreaker: Pts → W → win prob sum (descending — higher is better).
     This matches group_tables.py exactly, ensuring the bracket is consistent
     with the group tab standings shown in the Excel.
     """
@@ -140,18 +141,18 @@ def compute_standings(pred_df):
                         key=lambda t: (-team_pts.get(t, 0),
                                        -team_wins.get(t, 0)))
         standings[grp] = [(t, team_pts.get(t, 0), team_wins.get(t, 0),
-                           _opp_win_prob_sum(t, pred_df)) for t in ranked]
+                           _win_prob_sum(t, pred_df)) for t in ranked]
     return standings
 
 
 def pick_best_thirds(standings, pred_df):
-    """Return sorted list of (pts, wins, opp_win_sum, team, group) for 8 best 3rd-place."""
+    """Return sorted list of (pts, wins, win_prob_sum, team, group) for 8 best 3rd-place."""
     thirds = []
     for grp, rows in standings.items():
-        t, pts, wins, opp_win_sum = rows[2]   # 3rd place
-        thirds.append((pts, wins, opp_win_sum, t, grp))
-    # Sort: pts desc, wins desc, opp_win_sum asc (lower opponent win prob = better)
-    thirds.sort(key=lambda x: (-x[0], -x[1], x[2]))
+        t, pts, wins, win_prob_sum = rows[2]   # 3rd place
+        thirds.append((pts, wins, win_prob_sum, t, grp))
+    # Sort: pts desc, wins desc, win_prob_sum desc (higher own win prob = better)
+    thirds.sort(key=lambda x: (-x[0], -x[1], -x[2]))
     return thirds[:8]
 
 
@@ -221,8 +222,6 @@ def build_profiles():
                     'gd_ma20':        row.get(f'{side}_goal_diff_ma_20', 0),
                     'gd_ma5':         row.get(f'{side}_goal_diff_ma_5', 0),
                     'wc_games':       row.get(f'{side}_wc_games', 0),
-                    'elo_delta_20':   row.get(f'{side}_elo_delta_20', 0),
-                    'elo_ma_8yr':     row.get(f'{side}_elo_ma_8yr', 1500),
                     'confederation':  row.get(f'confederation_{side}', 'Unknown'),
                 }
     return profiles
@@ -262,10 +261,6 @@ def predict_ko(model, team_a, team_b, profiles):
         'away_goal_diff_ma_5':              pb.get('gd_ma5', 0),
         'home_wc_games':                    pa.get('wc_games', 0),
         'away_wc_games':                    pb.get('wc_games', 0),
-        'home_elo_delta_20':                pa.get('elo_delta_20', 0),
-        'away_elo_delta_20':                pb.get('elo_delta_20', 0),
-        'home_elo_ma_8yr':                  pa.get('elo_ma_8yr', 1500),
-        'away_elo_ma_8yr':                  pb.get('elo_ma_8yr', 1500),
         'confederation_home':               pa.get('confederation', 'Unknown'),
         'confederation_away':               pb.get('confederation', 'Unknown'),
     })
@@ -480,18 +475,18 @@ def run():
 
     best_thirds = pick_best_thirds(standings, df)
     print(f'\n8 best 3rd-place teams:')
-    for pts, wins, opp_win_sum, team, grp in best_thirds:
-        print(f'  {team} (Group {grp}) — {pts}pts, {wins}W, opp_win_sum={opp_win_sum:.3f}')
+    for pts, wins, win_prob_sum, team, grp in best_thirds:
+        print(f'  {team} (Group {grp}) — {pts}pts, {wins}W, win_prob_sum={win_prob_sum:.3f}')
 
     thirds_assign = allocate_thirds(best_thirds, R32)
     print(f'\n3rd-place slot assignments:')
     for mid, team in sorted(thirds_assign.items()):
         print(f'  Match {mid}: {team}')
 
-    print('\nLoading dataset and training CatBoost (draw_weight=0.62)...')
+    print(f'\nLoading dataset and training CatBoost (draw_weight={CB_DRAW_WEIGHT})...')
     full_df  = build_dataset()
     train_df = full_df[full_df['date'] < WC26_START].reset_index(drop=True)
-    model    = CatBoostPredictor(draw_weight=0.62)
+    model    = CatBoostPredictor(draw_weight=CB_DRAW_WEIGHT)
     model.fit(train_df)
 
     print('Building team profiles...')

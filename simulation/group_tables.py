@@ -205,21 +205,21 @@ def _write_best_thirds_sheet(ws, all_thirds):
     ws.freeze_panes = 'A4'
 
 
-def _opp_win_prob_sum(team, df):
-    """Sum of opponent win probabilities across a team's group matches (lower = better)."""
+def _win_prob_sum(team, df):
+    """Sum of the team's own win probabilities across group matches (higher = better)."""
     total = 0.0
     for _, row in df.iterrows():
         if row['Home'] == team:
-            total += row['P(AW)']
-        elif row['Away'] == team:
             total += row['P(HW)']
+        elif row['Away'] == team:
+            total += row['P(AW)']
     return total
 
 
 def _compute_all_thirds(df, elo_map):
     """
     Compute standing for every group, extract 3rd-place teams,
-    rank by Pts -> W -> opponent win prob sum (ascending). Returns list of dicts sorted best to worst.
+    rank by Pts -> W -> win prob sum (descending). Returns list of dicts sorted best to worst.
     """
     all_groups_standings = {}
     for grp, teams in GROUPS.items():
@@ -240,10 +240,10 @@ def _compute_all_thirds(df, elo_map):
             'd':           t['D'],
             'l':           t['L'],
             'pts':         t['Pts'],
-            'opp_win_sum': _opp_win_prob_sum(team, df),
+            'win_prob_sum': _win_prob_sum(team, df),
         })
 
-    thirds.sort(key=lambda x: (-x['pts'], -x['w'], x['opp_win_sum']))
+    thirds.sort(key=lambda x: (-x['pts'], -x['w'], -x['win_prob_sum']))
     for i, t in enumerate(thirds, 1):
         t['pos'] = i
     return thirds

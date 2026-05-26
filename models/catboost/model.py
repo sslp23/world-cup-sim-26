@@ -22,8 +22,6 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 # Signed difference features — negated when teams are swapped during augmentation.
 DIFF_COLS = [
     'elo_diff',
-    'elo_delta_20_diff',
-    'elo_ma_8yr_diff',
     'wc_games_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
@@ -55,9 +53,7 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['elo_diff']          = df['elo_diff']
-    feat['elo_delta_20_diff'] = df['home_elo_delta_20'] - df['away_elo_delta_20']
-    feat['elo_ma_8yr_diff']   = df['home_elo_ma_8yr']   - df['away_elo_ma_8yr']
+    feat['elo_diff']      = df['elo_diff']
 
     feat['wc_games_diff'] = df['home_wc_games'] - df['away_wc_games']
 

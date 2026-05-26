@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 import numpy as np
 import pandas as pd
 from models.xgboost.model import XGBoostPredictor
+from config import XGB_DRAW_WEIGHT
 
 WC_2022_START = pd.Timestamp('2022-11-20')
 WC_2022_END   = pd.Timestamp('2022-12-18')
@@ -63,7 +64,7 @@ def run():
     print(f"WC 2022 matches  : {len(wc22)}")
 
     # ── Fit model ─────────────────────────────────────────────────────────────
-    model = XGBoostPredictor(draw_weight=0.67)
+    model = XGBoostPredictor(draw_weight=XGB_DRAW_WEIGHT)
     model.fit(train_df)
 
     print("\nFeature importances:")

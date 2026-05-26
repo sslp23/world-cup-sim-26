@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 import numpy as np
 import pandas as pd
 from models.catboost.model import CatBoostPredictor
+from config import CB_DRAW_WEIGHT
 
 WC_2022_START = pd.Timestamp('2022-11-20')
 WC_2022_END   = pd.Timestamp('2022-12-18')
@@ -50,7 +51,7 @@ def run():
     print(f"Training matches : {len(train_df)}")
     print(f"WC 2022 matches  : {len(wc22)}")
 
-    model = CatBoostPredictor(draw_weight=0.58)
+    model = CatBoostPredictor(draw_weight=CB_DRAW_WEIGHT)
     model.fit(train_df)
 
     print("\nFeature importances:")

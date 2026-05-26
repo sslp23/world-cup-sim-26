@@ -63,8 +63,6 @@ All features are expressed from the **attacker's perspective** — a single regr
 | Group | Features | Notes |
 | --- | --- | --- |
 | Ratings | `elo_diff`, `abs_elo_diff` | `elo_diff` negated for away attacker; `abs_elo_diff` unchanged (magnitude is symmetric) |
-| ELO momentum | `elo_delta_20_diff` | Negated for away attacker |
-| ELO history | `elo_ma_8yr_diff` | 8-year rolling mean ELO; most distinct from current elo_diff (r=0.94); negated for away attacker |
 | WC experience | `wc_games_diff` | Negated for away attacker |
 | Attacker form | `att_gw_ma20`, `att_gw_ma5`, `att_pww_ma20` | Attacker's weighted goals scored and points won |
 | Defender form | `def_gsw_ma20`, `def_gsw_ma5`, `def_gd_ma20` | Defender's weighted goals conceded and goal difference |

@@ -26,10 +26,6 @@ FEATURE_COLS = [
     'elo_diff',
     # Absolute quality gap — same regardless of attacker perspective
     'abs_elo_diff',
-    # ELO momentum — signed: positive = attacker improving faster than defender
-    'elo_delta_20_diff',
-    # 8-year ELO mean — historical pedigree, most distinct from current elo_diff
-    'elo_ma_8yr_diff',
     # WC history — attacker advantage in tournament experience
     'wc_games_diff',
     # Attacker's recent offensive output (weighted by opponent strength)
@@ -56,8 +52,6 @@ def _build_attacker_features(df, attacker='home'):
     if attacker == 'home':
         feat['elo_diff']           = df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
-        feat['elo_delta_20_diff'] = df['home_elo_delta_20'] - df['away_elo_delta_20']
-        feat['elo_ma_8yr_diff']   = df['home_elo_ma_8yr']   - df['away_elo_ma_8yr']
         feat['wc_games_diff']      = df['home_wc_games'] - df['away_wc_games']
         feat['att_gw_ma20']        = df['home_goals_weighted_ma_20']
         feat['att_gw_ma5']         = df['home_goals_weighted_ma_5']
@@ -68,8 +62,6 @@ def _build_attacker_features(df, attacker='home'):
     else:  # away team attacks
         feat['elo_diff']           = -df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
-        feat['elo_delta_20_diff'] = df['away_elo_delta_20'] - df['home_elo_delta_20']
-        feat['elo_ma_8yr_diff']   = df['away_elo_ma_8yr']   - df['home_elo_ma_8yr']
         feat['wc_games_diff']      = df['away_wc_games'] - df['home_wc_games']
         feat['att_gw_ma20']        = df['away_goals_weighted_ma_20']
         feat['att_gw_ma5']         = df['away_goals_weighted_ma_5']

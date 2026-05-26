@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 import numpy as np
 import pandas as pd
 from models.ml_poisson.model import MLPoissonModel
+from config import MLP_RHO
 
 WC_2022_START = pd.Timestamp('2022-11-20')
 WC_2022_END   = pd.Timestamp('2022-12-18')
@@ -50,7 +51,7 @@ def run():
     print(f"Training matches : {len(train_df)}")
     print(f"WC 2022 matches  : {len(wc22)}")
 
-    model = MLPoissonModel(rho=-0.45)
+    model = MLPoissonModel(rho=MLP_RHO)
     model.fit(train_df)
 
     print("\nFeature importances (goal regressor):")

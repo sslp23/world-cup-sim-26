@@ -24,6 +24,7 @@ import pandas as pd
 from models.xgboost.model        import XGBoostPredictor
 from models.catboost.model       import CatBoostPredictor
 from models.ml_poisson.model     import MLPoissonModel
+from config import XGB_DRAW_WEIGHT, CB_DRAW_WEIGHT, MLP_RHO
 
 WC_2022_START = pd.Timestamp('2022-11-20')
 WC_2022_END   = pd.Timestamp('2022-12-18')
@@ -78,15 +79,15 @@ def run():
 
     # ── Train all models ───────────────────────────────────────────────────────
     print("\nTraining XGBoost...")
-    xgb = XGBoostPredictor(draw_weight=1)
+    xgb = XGBoostPredictor(draw_weight=XGB_DRAW_WEIGHT)
     xgb.fit(train_df)
 
     print("Training CatBoost...")
-    cb = CatBoostPredictor(draw_weight=0.67)
+    cb = CatBoostPredictor(draw_weight=CB_DRAW_WEIGHT)
     cb.fit(train_df)
 
     print("Training ML-Poisson...")
-    mlp = MLPoissonModel(rho=-0.40)
+    mlp = MLPoissonModel(rho=MLP_RHO)
     mlp.fit(train_df)
 
     # ── Predict ────────────────────────────────────────────────────────────────

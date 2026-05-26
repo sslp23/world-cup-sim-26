@@ -106,12 +106,7 @@ ELO captures the full head-to-head results history and is the strongest individu
 
 Multi-horizon ELO features capture how a team's strength has evolved. These complement `elo_diff` (point-in-time) with trajectory and historical pedigree.
 
-| Feature | Description |
-| --- | --- |
-| `elo_delta_20_diff` | Difference of each team's ELO change over their last 20 games — positive = home team improving faster |
-| `elo_ma_8yr_diff` | 8-year rolling mean ELO difference — historical pedigree; most distinct from current ELO (r=0.94 vs 0.97–0.98 for shorter windows) |
-
-`elo_ma_2yr_diff` and `elo_ma_4yr_diff` were excluded after collinearity analysis — Pearson r = 0.97–0.98 with `elo_diff`, near-identical to current ELO because ratings change slowly. Partial r ≈ −0.04 after conditioning on `elo_diff`. See `eda/elo_features_analysis.py`.
+`elo_delta_20_diff`, `elo_ma_2yr_diff`, `elo_ma_4yr_diff`, and `elo_ma_8yr_diff` were all excluded. The MA variants had Pearson r = 0.94–0.98 with `elo_diff` (VIF > 39); `elo_delta_20_diff` had near-zero mutual information (MI ≈ 0.0003) and partial r = +0.047 after conditioning on `elo_diff`. See `eda/elo_features_analysis.py`.
 
 #### World Cup experience
 

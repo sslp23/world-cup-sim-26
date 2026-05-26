@@ -39,7 +39,7 @@ All continuous features are expressed as **difference features** (home team valu
 
 `elo_ma_8yr_diff` is the most distinct (r = 0.94, VIF = 39, partial r = −0.079) and has the best individual log-loss improvement (−0.003 over elo_diff baseline).
 
-**Decision: keep only `elo_ma_8yr_diff`.** The 2yr and 4yr means are subsumed by current ELO; the 8yr mean captures historical pedigree with meaningful independent signal.
+**Decision: drop all ELO rolling means.** All three (r = 0.94–0.98) are too collinear with current ELO to add reliable independent signal. `elo_ma_8yr_diff` was initially kept (partial r = −0.079) but subsequently removed as it didn't perform as expected in practice.
 
 - **Long-window moving averages (20 games)** are consistently more predictive than short-window ones (3 games), since they capture a team's true level rather than short-term noise.
 - **`form_trend`** (linear slope of recent

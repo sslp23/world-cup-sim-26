@@ -50,8 +50,6 @@ See [features.md](../../features.md#model-feature-selection) for the full descri
 | Group | Features |
 | --- | --- |
 | Ratings | `elo_diff`, `abs_elo_diff` |
-| ELO momentum | `elo_delta_20_diff` |
-| ELO history | `elo_ma_8yr_diff` |
 | WC experience | `wc_games_diff` |
 | Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
 | Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |

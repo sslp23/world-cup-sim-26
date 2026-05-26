@@ -73,7 +73,7 @@ See [`xgboost/README.md`](xgboost/README.md) for design details.
 - `draw_weight = 0.65` — draw class weight multiplier (tuned on WC 2022)
 - `n_estimators = 500`, `learning_rate = 0.05`, `max_depth = 4`
 
-**Features:** ELO-based ratings (`elo_diff`, `abs_elo_diff`), ELO momentum (`elo_delta_20_diff`), multi-horizon ELO means (`elo_ma_2yr/4yr/8yr_diff`), WC experience (`wc_games_diff`), and weighted form features (points won, goals scored/suffered, goal difference over 20 and 5 games). `points_dif` and `pi_diff` excluded after collinearity analysis.
+**Features:** ELO-based ratings (`elo_diff`, `abs_elo_diff`), WC experience (`wc_games_diff`), and weighted form features (points won, goals scored/suffered, goal difference over 20 and 5 games). `points_dif`, `pi_diff`, `elo_delta_20_diff`, and ELO MA variants excluded after collinearity/predictive-power analysis.
 
 **Training data:** All ranked matches (2018–2022) with ELO features available.
 
@@ -140,7 +140,7 @@ See [`catboost/README.md`](catboost/README.md) for design details.
 - `draw_weight = 0.72` — draw class weight multiplier (tuned on WC 2022)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
-**Features:** ELO-based ratings (`elo_diff`, `abs_elo_diff`), ELO momentum (`elo_delta_20_diff`), multi-horizon ELO means (`elo_ma_2yr/4yr/8yr_diff`), WC experience (`wc_games_diff`), weighted form features (points won, goals scored/suffered, goal difference over 20 and 5 games), and `confederation_home` / `confederation_away` as native categorical features. `points_dif` and `pi_diff` excluded after collinearity analysis (partial r ≈ −0.05 after conditioning on ELO).
+**Features:** ELO-based ratings (`elo_diff`, `abs_elo_diff`), WC experience (`wc_games_diff`), weighted form features (points won, goals scored/suffered, goal difference over 20 and 5 games), and `confederation_home` / `confederation_away` as native categorical features. `points_dif`, `pi_diff`, `elo_delta_20_diff`, and ELO MA variants excluded after collinearity/predictive-power analysis.
 
 **Training data:** All ranked matches (2018–2022) with ELO features available.
 

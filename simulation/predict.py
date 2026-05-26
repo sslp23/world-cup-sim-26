@@ -1,8 +1,8 @@
 """
 Trains CatBoost on post-WC22 data and predicts WC26 group stage probabilities.
 
-CatBoost (draw_weight=0.66) selected as simulation model based on cross-WC
-backtest performance (best RPS and Log-Loss across 5 WC editions 2006-2022).
+CatBoost selected as simulation model based on cross-WC backtest performance
+(best RPS across 5 WC editions 2006-2022). draw_weight set via config.py.
 """
 
 import os
@@ -13,6 +13,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from models.catboost.model import CatBoostPredictor
+from config import CB_DRAW_WEIGHT
 
 WC26_START    = pd.Timestamp('2026-06-11')
 WC26_END      = pd.Timestamp('2026-06-27')
@@ -36,8 +37,8 @@ def run(full_df: pd.DataFrame) -> list[dict]:
     wc26_df.to_csv('data/wc_26_data.csv', index=False)
     print(f'WC26 dataset saved to data/wc_26_data.csv')
 
-    print('Training CatBoost (draw_weight=0.62)...')
-    model = CatBoostPredictor(draw_weight=0.62)
+    print(f'Training CatBoost (draw_weight={CB_DRAW_WEIGHT})...')
+    model = CatBoostPredictor(draw_weight=CB_DRAW_WEIGHT)
     model.fit(train_df)
 
     print('Predicting...')
