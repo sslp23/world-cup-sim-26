@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tunes draw_weight for CatBoostPredictor against WC 2022.
 """
 
@@ -48,7 +48,7 @@ def evaluate(model, wc22):
 
 if __name__ == "__main__":
     print("Loading data...")
-    full_df = pd.read_csv("data/ranked_database_with_features.csv")
+    full_df = pd.read_csv("data/past_wc/wc2022/ranked_database_with_features.csv")
     full_df['date'] = pd.to_datetime(full_df['date'])
 
     train_df = full_df[full_df['date'] < WC_2022_START].reset_index(drop=True)

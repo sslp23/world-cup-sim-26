@@ -1,12 +1,12 @@
 """
-Adds group table tabs (A–L) to simulation/output/wc_26_sim.xlsx.
+Adds group table tabs (A–L) to simulation/output/wc_26_ml_poisson.xlsx.
 
 Each tab shows:
   - Group matches with model predictions and probabilities
   - Predicted standings (Pos, Team, MP, W, D, L, Pts)
 
 Run from the project root:
-    python -m simulation.group_tables
+    python -m simulation.ml_poisson.group_tables
 """
 
 import pandas as pd
@@ -14,7 +14,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-XLSX_PATH = 'simulation/output/wc_26_sim.xlsx'
+XLSX_PATH = 'simulation/output/wc_26_ml_poisson.xlsx'
 
 GROUPS = {
     'A': ['Mexico', 'South Africa', 'South Korea', 'Czech Republic'],
@@ -187,7 +187,6 @@ def _write_best_thirds_sheet(ws, all_thirds):
         row_fill  = PatternFill('solid', fgColor=GREEN if advancing else WHITE)
         qual_text = 'Advance to knockout stage' if advancing else ''
 
-        # Merge Qualification cell vertically for the 8-team block on first advancing row
         vals = [t['pos'], t['grp'], t['team'],
                 t['mp'], t['w'], t['d'], t['l'],
                 '-', '-', '-',   # GF, GA, GD — no score predictions

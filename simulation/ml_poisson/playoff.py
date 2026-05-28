@@ -1,22 +1,22 @@
 """
 Simulates the 2026 FIFA World Cup knockout stages and adds bracket tabs to
-simulation/output/wc_26_sim.xlsx.
+simulation/output/wc_26_ml_poisson.xlsx.
 
 Flow:
-  1. Load group stage predictions from wc_26_sim.xlsx
-  2. Compute group standings (Pts → W → ELO tiebreak)
+  1. Load group stage predictions from wc_26_ml_poisson.xlsx
+  2. Compute group standings (Pts → W → win prob sum tiebreak)
   3. Pick the 8 best 3rd-place teams, allocate to R32 slots
-  4. Re-train CatBoost on post-WC22 data (draw_weight from config.py)
+  4. Re-train ML-Poisson on pre-WC26 data (rho from config.py)
   5. Build team feature profiles from wc_26_data.csv
   6. Simulate R32 → R16 → QF → SF → Final with symmetrized inference
      Draws resolved by relative strength (P_win / (P_win + P_loss))
 
 Run from the project root:
-    python -m simulation.playoff
+    python -m simulation.ml_poisson.playoff
 """
 
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import numpy as np
 import pandas as pd
@@ -24,11 +24,11 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
-from models.catboost.model import CatBoostPredictor
-from simulation.dataset    import build as build_dataset
-from config import CB_DRAW_WEIGHT
+from models.ml_poisson.model import MLPoissonModel
+from simulation.dataset      import build as build_dataset
+from config import MLP_RHO
 
-XLSX_PATH  = 'simulation/output/wc_26_sim.xlsx'
+XLSX_PATH  = 'simulation/output/wc_26_ml_poisson.xlsx'
 WC26_START = pd.Timestamp('2026-06-11')
 WC26_END   = pd.Timestamp('2026-06-27')
 
@@ -49,9 +49,6 @@ GROUPS = {
 }
 
 # ── R32 bracket ───────────────────────────────────────────────────────────────
-# (match_id, slot_A, slot_B)
-# slot format: '1A' = winner Group A, '2B' = runner-up Group B
-# '3ABCDF' = best 3rd from groups A/B/C/D/F (eligible set)
 R32 = [
     (73, '2A',      '2B'),
     (74, '1E',      '3ABCDF'),
@@ -78,15 +75,6 @@ QF  = [(97,89,90), (98,93,94), (99,91,92), (100,95,96)]
 SF  = [(101,97,98), (102,99,100)]
 THIRD_PLACE = (103, 101, 102)
 FINAL       = (104, 101, 102)
-
-ROUND_DATES = {
-    'R32': ['Jun 28','Jun 29','Jun 30','Jul 1','Jul 2','Jul 3'],
-    'R16': ['Jul 4','Jul 5','Jul 6','Jul 7'],
-    'QF':  ['Jul 9','Jul 10','Jul 11'],
-    'SF':  ['Jul 14','Jul 15'],
-    '3rd': 'Jul 18',
-    'Final': 'Jul 19',
-}
 
 # ── Colours ───────────────────────────────────────────────────────────────────
 DARK_BLUE  = 'FF1F4E79'
@@ -118,10 +106,7 @@ def _win_prob_sum(team, pred_df):
 def compute_standings(pred_df):
     """
     Return {group: [(team, pts, wins, win_prob_sum), ...]} sorted 1→4.
-
-    Tiebreaker: Pts → W → win prob sum (descending — higher is better).
-    This matches group_tables.py exactly, ensuring the bracket is consistent
-    with the group tab standings shown in the Excel.
+    Tiebreaker: Pts → W → win prob sum (descending).
     """
     team_pts  = {t: 0 for g in GROUPS.values() for t in g}
     team_wins = {t: 0 for g in GROUPS.values() for t in g}
@@ -149,9 +134,8 @@ def pick_best_thirds(standings, pred_df):
     """Return sorted list of (pts, wins, win_prob_sum, team, group) for 8 best 3rd-place."""
     thirds = []
     for grp, rows in standings.items():
-        t, pts, wins, win_prob_sum = rows[2]   # 3rd place
+        t, pts, wins, win_prob_sum = rows[2]
         thirds.append((pts, wins, win_prob_sum, t, grp))
-    # Sort: pts desc, wins desc, win_prob_sum desc (higher own win prob = better)
     thirds.sort(key=lambda x: (-x[0], -x[1], -x[2]))
     return thirds[:8]
 
@@ -160,12 +144,6 @@ def allocate_thirds(best_thirds, r32):
     """
     Assign 3rd-place teams to R32 slots using the official FIFA lookup table
     (simulation/third_place_combinations.csv, Annex C of the regulations).
-
-    Column → match mapping:
-      1A vs → M79  |  1B vs → M85  |  1D vs → M81  |  1E vs → M74
-      1G vs → M82  |  1I vs → M77  |  1K vs → M87  |  1L vs → M80
-
-    Returns {match_id: team}.
     """
     import pandas as pd
 
@@ -179,7 +157,6 @@ def allocate_thirds(best_thirds, r32):
     team_by_grp = {grp: team for _, _, _, team, grp in best_thirds}
     qual_groups = frozenset(team_by_grp.keys())
 
-    # Find the matching row
     match_row = None
     for _, row in combo_df.iterrows():
         row_groups = frozenset(str(v) for v in row[grp_cols] if pd.notna(v))
@@ -192,8 +169,8 @@ def allocate_thirds(best_thirds, r32):
 
     assignment = {}
     for col, match_id in COL_TO_MATCH.items():
-        val = str(match_row[col]).strip()   # e.g. '3C'
-        grp = val.lstrip('3')               # e.g. 'C'
+        val = str(match_row[col]).strip()
+        grp = val.lstrip('3')
         if grp in team_by_grp:
             assignment[match_id] = team_by_grp[grp]
 
@@ -211,18 +188,19 @@ def build_profiles():
             team = row[f'{side}_team']
             if team not in profiles:
                 profiles[team] = {
-                    'elo':            row.get(f'{side}_elo', 1500),
-                    'points':         row.get(f'points_{side}', 1400),
-                    'pww_ma20':       row.get(f'{side}_points_weighted_ma_20', 0),
-                    'pww_ma5':        row.get(f'{side}_points_weighted_ma_5', 0),
-                    'gw_ma20':        row.get(f'{side}_goals_weighted_ma_20', 0),
-                    'gw_ma5':         row.get(f'{side}_goals_weighted_ma_5', 0),
-                    'gsw_ma20':       row.get(f'{side}_goals_suffered_weighted_ma_20', 0),
-                    'gsw_ma5':        row.get(f'{side}_goals_suffered_weighted_ma_5', 0),
-                    'gd_ma20':        row.get(f'{side}_goal_diff_ma_20', 0),
-                    'gd_ma5':         row.get(f'{side}_goal_diff_ma_5', 0),
+                    'elo':      row.get(f'{side}_elo', 1500),
+                    'points':   row.get(f'points_{side}', 1400),
+                    'pww_ma20': row.get(f'{side}_points_weighted_ma_20', 0),
+                    'pww_ma5':  row.get(f'{side}_points_weighted_ma_5', 0),
+                    'gw_ma20':  row.get(f'{side}_goals_weighted_ma_20', 0),
+                    'gw_ma5':   row.get(f'{side}_goals_weighted_ma_5', 0),
+                    'gsw_ma20': row.get(f'{side}_goals_suffered_weighted_ma_20', 0),
+                    'gsw_ma5':  row.get(f'{side}_goals_suffered_weighted_ma_5', 0),
+                    'gd_ma20':  row.get(f'{side}_goal_diff_ma_20', 0),
+                    'gd_ma5':   row.get(f'{side}_goal_diff_ma_5', 0),
                     'wc_games':       row.get(f'{side}_wc_games', 0),
-                    'confederation':  row.get(f'confederation_{side}', 'Unknown'),
+                    'wc_best_round':  row.get(f'{side}_wc_best_round', 0),
+                    'wc_gpg':         row.get(f'{side}_wc_goals_per_game', 0),
                 }
     return profiles
 
@@ -257,12 +235,14 @@ def predict_ko(model, team_a, team_b, profiles):
         'away_goals_suffered_weighted_ma_5': pb.get('gsw_ma5', 0),
         'home_goal_diff_ma_20':              pa.get('gd_ma20', 0),
         'away_goal_diff_ma_20':              pb.get('gd_ma20', 0),
-        'home_goal_diff_ma_5':              pa.get('gd_ma5', 0),
-        'away_goal_diff_ma_5':              pb.get('gd_ma5', 0),
-        'home_wc_games':                    pa.get('wc_games', 0),
-        'away_wc_games':                    pb.get('wc_games', 0),
-        'confederation_home':               pa.get('confederation', 'Unknown'),
-        'confederation_away':               pb.get('confederation', 'Unknown'),
+        'home_goal_diff_ma_5':               pa.get('gd_ma5', 0),
+        'away_goal_diff_ma_5':               pb.get('gd_ma5', 0),
+        'home_wc_games':                     pa.get('wc_games', 0),
+        'away_wc_games':                     pb.get('wc_games', 0),
+        'home_wc_best_round':                pa.get('wc_best_round', 0),
+        'away_wc_best_round':                pb.get('wc_best_round', 0),
+        'home_wc_goals_per_game':            pa.get('wc_gpg', 0),
+        'away_wc_goals_per_game':            pb.get('wc_gpg', 0),
     })
 
     probs   = model.predict_proba_row(row)
@@ -270,7 +250,6 @@ def predict_ko(model, team_a, team_b, profiles):
     p_d     = probs['draw']
     p_aw    = probs['away_win']
 
-    # Resolve draw: redistribute proportionally to win probabilities
     total   = p_hw + p_aw
     p_a_win = p_hw + p_d * (p_hw / total if total > 0 else 0.5)
     p_b_win = p_aw + p_d * (p_aw / total if total > 0 else 0.5)
@@ -282,17 +261,11 @@ def predict_ko(model, team_a, team_b, profiles):
 # ── Simulate bracket ──────────────────────────────────────────────────────────
 
 def simulate_bracket(standings, thirds_assign, model, profiles):
-    """
-    Resolve the bracket slot by slot. Returns results dict:
-    {match_id: {'home': team, 'away': team, 'winner': team, 'p_home': float, 'p_away': float}}
-    """
-    # Build slot → team lookup
     slot_to_team = {}
     for grp, rows in standings.items():
         slot_to_team[f'1{grp}'] = rows[0][0]
         slot_to_team[f'2{grp}'] = rows[1][0]
     for mid, team in thirds_assign.items():
-        # Find which slot in R32 this is (team goes to the '3...' slot of match mid)
         for m_id, slotA, slotB in R32:
             if m_id == mid:
                 if slotB.startswith('3'):
@@ -303,18 +276,15 @@ def simulate_bracket(standings, thirds_assign, model, profiles):
     results = {}
 
     def resolve_slot(slot, mid=None, side=None):
-        """Resolve a slot string to a team name."""
         if slot.startswith('1') or slot.startswith('2'):
             return slot_to_team[slot]
         if slot.startswith('3'):
             key_b = f'r32_{mid}_B'
             key_a = f'r32_{mid}_A'
             return slot_to_team.get(key_b, slot_to_team.get(key_a, '?'))
-        # It's a match_id reference → return that match's winner
         prev_id = int(slot)
         return results[prev_id]['winner']
 
-    # Simulate R32
     for mid, slotA, slotB in R32:
         team_a = resolve_slot(slotA, mid=mid, side='A')
         team_b = resolve_slot(slotB, mid=mid, side='B')
@@ -322,7 +292,6 @@ def simulate_bracket(standings, thirds_assign, model, profiles):
         results[mid] = {'home': team_a, 'away': team_b, 'winner': winner,
                         'p_home': p_a, 'p_away': p_b, 'round': 'R32'}
 
-    # Simulate R16
     for mid, src_a, src_b in R16:
         team_a = results[src_a]['winner']
         team_b = results[src_b]['winner']
@@ -330,7 +299,6 @@ def simulate_bracket(standings, thirds_assign, model, profiles):
         results[mid] = {'home': team_a, 'away': team_b, 'winner': winner,
                         'p_home': p_a, 'p_away': p_b, 'round': 'R16'}
 
-    # Simulate QF
     for mid, src_a, src_b in QF:
         team_a = results[src_a]['winner']
         team_b = results[src_b]['winner']
@@ -338,7 +306,6 @@ def simulate_bracket(standings, thirds_assign, model, profiles):
         results[mid] = {'home': team_a, 'away': team_b, 'winner': winner,
                         'p_home': p_a, 'p_away': p_b, 'round': 'QF'}
 
-    # Simulate SF
     sf_losers = {}
     for mid, src_a, src_b in SF:
         team_a = results[src_a]['winner']
@@ -349,14 +316,12 @@ def simulate_bracket(standings, thirds_assign, model, profiles):
                         'p_home': p_a, 'p_away': p_b, 'round': 'SF'}
         sf_losers[mid] = loser
 
-    # 3rd-place playoff
     t3a = sf_losers[SF[0][0]]
     t3b = sf_losers[SF[1][0]]
     winner, p_a, p_b, _ = predict_ko(model, t3a, t3b, profiles)
     results[103] = {'home': t3a, 'away': t3b, 'winner': winner,
                     'p_home': p_a, 'p_away': p_b, 'round': '3rd'}
 
-    # Final
     fin_a = results[SF[0][0]]['winner']
     fin_b = results[SF[1][0]]['winner']
     winner, p_a, p_b, _ = predict_ko(model, fin_a, fin_b, profiles)
@@ -389,16 +354,11 @@ def _data_cell(ws, row, col, value, bold=False, bg=WHITE, center=True):
 
 
 def write_round_sheet(ws, round_label, matches_info, results):
-    """
-    matches_info: list of (match_id, label_str)  e.g. (73, 'Jun 28')
-    """
     ws.sheet_view.showGridLines = False
     ws.row_dimensions[1].height = 24
 
-    # Title
     _hdr_cell(ws, 1, 1, round_label, bg=DARK_BLUE, size=13, merge_to=6)
 
-    # Column headers
     cols   = ['Match', 'Date', 'Team A', 'P(A)', 'P(B)', 'Team B', 'Winner']
     widths = [8, 10, 24, 8, 8, 24, 24]
     for ci, (col, w) in enumerate(zip(cols, widths), 1):
@@ -436,7 +396,6 @@ def write_final_sheet(ws, results):
         r = results[mid]
         is_winner_a = r['winner'] == r['home']
         bg = SILVER if ri % 2 == 0 else WHITE
-        label = '🏆 Champion' if mid == 104 else '🥉 3rd Place'
 
         _data_cell(ws, ri, 1, f'M{mid}', bg=bg)
         _data_cell(ws, ri, 2, date_lbl, bg=bg)
@@ -446,7 +405,6 @@ def write_final_sheet(ws, results):
         _data_cell(ws, ri, 6, r['away'], bold=not is_winner_a, bg=GREEN if not is_winner_a else bg, center=False)
         _data_cell(ws, ri, 7, r['winner'], bold=True, bg=GOLD)
 
-    # Champion call-out
     champion = results[104]['winner']
     ws.row_dimensions[7].height = 28
     c = ws.cell(row=7, column=1, value=f'PREDICTED CHAMPION:  {champion}')
@@ -483,10 +441,10 @@ def run():
     for mid, team in sorted(thirds_assign.items()):
         print(f'  Match {mid}: {team}')
 
-    print(f'\nLoading dataset and training CatBoost (draw_weight={CB_DRAW_WEIGHT})...')
+    print(f'\nLoading dataset and training ML-Poisson (rho={MLP_RHO})...')
     full_df  = build_dataset()
     train_df = full_df[full_df['date'] < WC26_START].reset_index(drop=True)
-    model    = CatBoostPredictor(draw_weight=CB_DRAW_WEIGHT)
+    model    = MLPoissonModel(rho=MLP_RHO)
     model.fit(train_df)
 
     print('Building team profiles...')
@@ -498,7 +456,6 @@ def run():
     print('\nWriting Excel tabs...')
     wb = load_workbook(XLSX_PATH)
 
-    # Remove existing knockout tabs
     for name in ['Round of 32', 'Round of 16', 'Quarter-finals',
                  'Semi-finals', 'Final']:
         if name in wb.sheetnames:

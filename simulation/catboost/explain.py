@@ -10,12 +10,12 @@ Parameters (edit below):
     MATCH_DATE : match date string (optional, for disambiguation)
 
 Run from the project root:
-    python -m simulation.explain
+    python -m simulation.catboost.explain
 """
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import numpy as np
 import pandas as pd
@@ -26,9 +26,9 @@ from simulation.dataset    import build as build_dataset
 from config import CB_DRAW_WEIGHT
 
 # ── Match to explain ──────────────────────────────────────────────────────────
-HOME_TEAM  = 'Bosnia and Herzegovina'
-AWAY_TEAM  = 'Qatar'
-MATCH_DATE = '2026-06-24'    # set to None if not needed for disambiguation
+HOME_TEAM  = 'Ghana'
+AWAY_TEAM  = 'Panama'
+MATCH_DATE = '2026-06-17'    # set to None if not needed for disambiguation
 # ─────────────────────────────────────────────────────────────────────────────
 
 WC26_START = pd.Timestamp('2026-06-11')

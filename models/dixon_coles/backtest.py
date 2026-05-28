@@ -1,4 +1,4 @@
-"""
+﻿"""
 Backtest Dixon-Coles against FIFA World Cup 2022.
 
 Training data : all matches in international_results.csv before 2022-11-20
@@ -62,7 +62,7 @@ def accuracy_single(probs, outcome):
 def run():
     # ── Load data ─────────────────────────────────────────────────────────────
     print("Loading data...")
-    full_df = pd.read_csv("data/ranked_database_with_features.csv")
+    full_df = pd.read_csv("data/past_wc/wc2022/ranked_database_with_features.csv")
     full_df['date'] = pd.to_datetime(full_df['date'])
 
     train_df = full_df[full_df['date'] < WC_2022_START].reset_index(drop=True)

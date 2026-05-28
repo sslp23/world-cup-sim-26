@@ -22,6 +22,8 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 # Signed difference features — negated when teams are swapped during augmentation.
 DIFF_COLS = [
     'elo_diff',
+    'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
+    'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
     'wc_games_diff',
     'pww_ma20_diff',
     'pww_ma5_diff',
@@ -53,7 +55,9 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['elo_diff']      = df['elo_diff']
+    feat['elo_diff']           = df['elo_diff']
+    feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
+    feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
 
     feat['wc_games_diff'] = df['home_wc_games'] - df['away_wc_games']
 
@@ -134,8 +138,8 @@ class CatBoostPredictor:
         self.depth        = depth
         self.draw_weight  = draw_weight
         self.random_seed  = random_seed
-        self.model        = None
-        self._fitted      = False
+        self.model    = None
+        self._fitted  = False
 
     def fit(self, df):
         """

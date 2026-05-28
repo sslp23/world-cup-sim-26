@@ -160,6 +160,43 @@ class FeaturesCreator:
                 on=['date', 'away_team'], how='left'
             )
 
+            # ── Year-end ELO averages ─────────────────────────────────────────
+            # For each team, take the last ELO observation in each calendar year
+            # and compute the rolling average over the previous 10 / 20 years.
+            # shift(1) ensures only PAST year-end values are used (no leakage).
+            elo_long['year'] = elo_long['date'].dt.year
+            year_end = (
+                elo_long.sort_values('date')
+                .groupby(['team', 'year'])['elo']
+                .last()
+                .reset_index()
+            )
+            avg_elo_parts = []
+            for team, grp in year_end.groupby('team'):
+                grp = grp.sort_values('year').reset_index(drop=True)
+                grp['avg_elo_10yr'] = grp['elo'].rolling(10, min_periods=1).mean().shift(1)
+                grp['avg_elo_20yr'] = grp['elo'].rolling(20, min_periods=1).mean().shift(1)
+                avg_elo_parts.append(grp[['team', 'year', 'avg_elo_10yr', 'avg_elo_20yr']])
+            avg_elo_year = pd.concat(avg_elo_parts, ignore_index=True)
+
+            df['_year'] = df['date'].dt.year
+            df = df.merge(
+                avg_elo_year.rename(columns={
+                    'team': 'home_team',
+                    'avg_elo_10yr': 'home_avg_elo_10yr',
+                    'avg_elo_20yr': 'home_avg_elo_20yr',
+                })[['home_team', 'year', 'home_avg_elo_10yr', 'home_avg_elo_20yr']],
+                left_on=['home_team', '_year'], right_on=['home_team', 'year'], how='left'
+            ).drop(columns='year', errors='ignore')
+            df = df.merge(
+                avg_elo_year.rename(columns={
+                    'team': 'away_team',
+                    'avg_elo_10yr': 'away_avg_elo_10yr',
+                    'avg_elo_20yr': 'away_avg_elo_20yr',
+                })[['away_team', 'year', 'away_avg_elo_10yr', 'away_avg_elo_20yr']],
+                left_on=['away_team', '_year'], right_on=['away_team', 'year'], how='left'
+            ).drop(columns=['year', '_year'], errors='ignore')
+
         # ==================== PI-RATINGS ====================
         if pi_df is not None:
             pi_df = pi_df.copy()
@@ -197,16 +234,33 @@ class FeaturesCreator:
         teams = set(wc_df['home_team']) | set(wc_df['away_team'])
         wc_games = {}
         wc_goals = {}
+        wc_goals_conceded = {}
         for team in teams:
             h = wc_df[wc_df['home_team'] == team]
             a = wc_df[wc_df['away_team'] == team]
-            wc_games[team] = len(h) + len(a)
-            wc_goals[team] = int(h['home_score'].sum() + a['away_score'].sum())
+            wc_games[team]          = len(h) + len(a)
+            wc_goals[team]          = int(h['home_score'].sum() + a['away_score'].sum())
+            wc_goals_conceded[team] = int(h['away_score'].sum() + a['home_score'].sum())
+
+        # Per-game rates — 0 for teams that never qualified
+        wc_gpg  = {t: wc_goals[t]          / wc_games[t] if wc_games[t] > 0 else 0.0 for t in teams}
+        wc_gcpg = {t: wc_goals_conceded[t] / wc_games[t] if wc_games[t] > 0 else 0.0 for t in teams}
 
         df['home_wc_games'] = df['home_team'].map(wc_games).fillna(0).astype(int)
         df['home_wc_goals'] = df['home_team'].map(wc_goals).fillna(0).astype(int)
         df['away_wc_games'] = df['away_team'].map(wc_games).fillna(0).astype(int)
         df['away_wc_goals'] = df['away_team'].map(wc_goals).fillna(0).astype(int)
+
+        df['home_wc_goals_per_game']          = df['home_team'].map(wc_gpg).fillna(0)
+        df['home_wc_goals_conceded_per_game'] = df['home_team'].map(wc_gcpg).fillna(0)
+        df['away_wc_goals_per_game']          = df['away_team'].map(wc_gpg).fillna(0)
+        df['away_wc_goals_conceded_per_game'] = df['away_team'].map(wc_gcpg).fillna(0)
+
+        # Best WC round ever reached per team
+        # 0=never qualified, 1=group stage, 2=R16, 3=QF, 4=SF, 5=Final/3rd, 6=Champion
+        wc_best_round = self._compute_wc_best_round(wc_df)
+        df['home_wc_best_round'] = df['home_team'].map(wc_best_round).fillna(0).astype(int)
+        df['away_wc_best_round'] = df['away_team'].map(wc_best_round).fillna(0).astype(int)
 
         # ==================== ROLLING / MOVING AVERAGE FEATURES ====================
         print("Calculating moving averages...")
@@ -349,3 +403,75 @@ class FeaturesCreator:
     def get_features_dataframe(self):
         """Return the dataframe with all features."""
         return self.df_with_features
+
+    def _compute_wc_best_round(self, wc_df):
+        """
+        Best WC round ever reached per team across all historical editions.
+
+        Round encoding: 0=never qualified, 1=group stage, 2=R16, 3=QF,
+                        4=SF, 5=Final or 3rd-place, 6=Champion.
+
+        Covers 1986–2022 (R16-era). Knockout rounds are inferred from
+        consecutive date clusters within each edition — no round column needed.
+        """
+        wc_df = wc_df.copy()
+        wc_df['date'] = pd.to_datetime(wc_df['date'])
+        wc_df['year'] = wc_df['date'].dt.year
+        wc_df = wc_df.sort_values('date')
+
+        # First date of the knockout phase for each WC edition.
+        WC_KO_START = {
+            2022: pd.Timestamp('2022-12-03'),
+            2018: pd.Timestamp('2018-06-30'),
+            2014: pd.Timestamp('2014-06-28'),
+            2010: pd.Timestamp('2010-06-26'),
+            2006: pd.Timestamp('2006-06-24'),
+            2002: pd.Timestamp('2002-06-15'),
+            1998: pd.Timestamp('1998-06-27'),
+            1994: pd.Timestamp('1994-06-25'),
+            1990: pd.Timestamp('1990-06-23'),
+            1986: pd.Timestamp('1986-06-15'),
+        }
+
+        best_round = {}
+
+        for year, ko_start in WC_KO_START.items():
+            yr_df = wc_df[wc_df['year'] == year].sort_values('date')
+            if len(yr_df) == 0:
+                continue
+
+            # Every team that appeared gets at least group stage (1)
+            for team in set(yr_df['home_team']) | set(yr_df['away_team']):
+                best_round[team] = max(best_round.get(team, 0), 1)
+
+            ko_df = yr_df[yr_df['date'] >= ko_start]
+            if len(ko_df) == 0:
+                continue
+
+            # Cluster consecutive knockout dates (≤1 day apart) → rounds
+            ko_dates = sorted(ko_df['date'].unique())
+            round_groups = []
+            current = [ko_dates[0]]
+            for d in ko_dates[1:]:
+                if (d - current[-1]).days <= 1:
+                    current.append(d)
+                else:
+                    round_groups.append(current)
+                    current = [d]
+            round_groups.append(current)
+            # round_groups[0]=R16(2), [1]=QF(3), [2]=SF(4), [3]=3rd+Final(5)
+
+            for ri, date_grp in enumerate(round_groups):
+                round_score = min(ri + 2, 5)
+                for _, match in ko_df[ko_df['date'].isin(date_grp)].iterrows():
+                    for team in [match['home_team'], match['away_team']]:
+                        best_round[team] = max(best_round.get(team, 0), round_score)
+
+            # Champion: winner of last match in the edition (the Final)
+            final = yr_df.iloc[-1]
+            if final['home_score'] > final['away_score']:
+                best_round[final['home_team']] = max(best_round.get(final['home_team'], 0), 6)
+            elif final['away_score'] > final['home_score']:
+                best_round[final['away_team']] = max(best_round.get(final['away_team'], 0), 6)
+
+        return best_round

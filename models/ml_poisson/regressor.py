@@ -27,6 +27,8 @@ FEATURE_COLS = [
     # Absolute quality gap — same regardless of attacker perspective
     'abs_elo_diff',
     # WC history — attacker advantage in tournament experience
+    'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
+    'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
     'wc_games_diff',
     # Attacker's recent offensive output (weighted by opponent strength)
     'att_gw_ma20',
@@ -52,6 +54,8 @@ def _build_attacker_features(df, attacker='home'):
     if attacker == 'home':
         feat['elo_diff']           = df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
+        feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
+        feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
         feat['wc_games_diff']      = df['home_wc_games'] - df['away_wc_games']
         feat['att_gw_ma20']        = df['home_goals_weighted_ma_20']
         feat['att_gw_ma5']         = df['home_goals_weighted_ma_5']
@@ -62,6 +66,8 @@ def _build_attacker_features(df, attacker='home'):
     else:  # away team attacks
         feat['elo_diff']           = -df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
+        feat['wc_best_round_diff'] = df['away_wc_best_round']     - df['home_wc_best_round']
+        feat['wc_gpg_diff']        = df['away_wc_goals_per_game'] - df['home_wc_goals_per_game']
         feat['wc_games_diff']      = df['away_wc_games'] - df['home_wc_games']
         feat['att_gw_ma20']        = df['away_goals_weighted_ma_20']
         feat['att_gw_ma5']         = df['away_goals_weighted_ma_5']

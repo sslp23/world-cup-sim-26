@@ -1,13 +1,16 @@
 """
-Trains CatBoost on post-WC22 data and predicts WC26 group stage probabilities.
+Trains CatBoost on pre-WC26 data and predicts WC26 group stage probabilities.
 
 CatBoost selected as simulation model based on cross-WC backtest performance
 (best RPS across 5 WC editions 2006-2022). draw_weight set via config.py.
+
+Run from the project root:
+    python -m simulation.catboost.run
 """
 
 import os
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 import pandas as pd
 from tqdm import tqdm
