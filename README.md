@@ -52,9 +52,11 @@ See [eda/README.md](eda/README.md) for the exploratory data analysis — feature
 
 #### Static (per match)
 
-- `home_elo` / `away_elo` / `elo_diff` — ELO ratings computed from full match history (eloratings.net formula)
-- `elo_ma_2yr` / `elo_ma_4yr` / `elo_ma_8yr` — 2/4/8-year rolling mean ELO (form cycle, WC cycle, historical pedigree)
+- `home_elo` / `away_elo` / `elo_diff` / `abs_elo_diff` — ELO ratings computed from full match history (eloratings.net formula)
 - `confederation_home` / `confederation_away` — football confederation per team (CatBoost only)
+- `home_wc_best_round` / `away_wc_best_round` — best WC round ever reached (0=never qualified … 6=champion)
+- `home_wc_goals_per_game` / `away_wc_goals_per_game` — goals scored per game in WC history (0 if never qualified)
+- `home_wc_games` / `away_wc_games` — total WC matches played
 - `neutral` / `tournament` — carried through from source data
 
 #### Rolling (per team, last 20 and 5 games, leak-free)
@@ -82,13 +84,13 @@ Averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
 
 | Model | Avg Accuracy | Avg RPS | Avg Log-Loss |
 | --- | --- | --- | --- |
-| Ensemble (XGB + CB + MLP) | **58.4%** | 0.1966 | 0.9775 |
-| Ordered Logit | 57.8% | 0.1995 | 0.9714 |
-| ML-Poisson | 56.9% | 0.1978 | **0.9707** |
-| **CatBoost** | 56.6% | **0.1956** | 0.9746 |
-| XGBoost | 54.7% | 0.2029 | 1.0230 |
+| Ordered Logit | **57.8%** | 0.1995 | 0.9714 |
+| XGBoost | 57.2% | 0.1977 | 0.9959 |
+| Ensemble (XGB + CB + MLP) | 56.9% | 0.1918 | 0.9564 |
+| **CatBoost** | 56.2% | **0.1914** | **0.9520** |
+| ML-Poisson | 55.9% | 0.1925 | 0.9574 |
 
-CatBoost leads on RPS (best probability calibration); ML-Poisson leads on Log-Loss; Ensemble leads on accuracy.
+CatBoost leads on both RPS and Log-Loss (best probability calibration); Ordered Logit leads on accuracy.
 
 See [`backtest/output/`](backtest/output/) for per-match Excel results per model and WC edition.
 
@@ -122,12 +124,19 @@ wc_26_ml/
 │   ├── avg_performance.py   # Reads output/*.xlsx → avg_performance.xlsx summary
 │   └── output/              # Per-match Excel results (one file per model)
 ├── simulation/
-│   ├── dataset.py           # Builds post-WC22 training set + WC26 group stage rows
-│   ├── predict.py           # Trains CatBoost on post-WC22 data, predicts WC26 group stage
-│   ├── group_tables.py      # Writes group table tabs + best 3rd-place ranking to Excel
-│   ├── playoff.py           # Simulates knockout bracket and writes round tabs to Excel
-│   ├── explain.py           # SHAP explanation for a single WC26 match (CatBoost)
-│   └── output/              # wc_26_sim.xlsx — full tournament simulation output
+│   ├── dataset.py           # Builds post-WC22 training set + WC26 group stage rows (shared)
+│   ├── catboost/            # CatBoost simulation (run.py → group_tables.py → playoff.py)
+│   │   ├── run.py           # Entry point: python -m simulation.catboost.run
+│   │   ├── predict.py       # Group stage predictions
+│   │   ├── group_tables.py  # Group tabs + best 3rd-place ranking
+│   │   ├── playoff.py       # Knockout bracket simulation
+│   │   └── explain.py       # SHAP explanation for a single match
+│   ├── ml_poisson/          # ML-Poisson simulation (same structure, uses MLPoissonModel)
+│   │   ├── run.py           # Entry point: python -m simulation.ml_poisson.run
+│   │   ├── predict.py       # Group stage predictions
+│   │   ├── group_tables.py  # Group tabs + best 3rd-place ranking
+│   │   └── playoff.py       # Knockout bracket simulation
+│   └── output/              # wc_26_catboost.xlsx / wc_26_ml_poisson.xlsx
 ├── experiments/             # Ad-hoc tests (training window size, dataset builder)
 └── data/
     ├── international_results.csv
