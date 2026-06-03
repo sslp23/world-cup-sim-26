@@ -25,13 +25,16 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 OUTCOME_ORDER  = ['home_win', 'draw', 'away_win']
 
 # Rating-only features — the "fences" model
-FEATURE_COLS = ['elo_diff', 'points_dif']
+# mv_sum_diff: NaN rows are dropped (statsmodels has no native NaN handling);
+# at prediction time fillna(0) is applied (neutral: equal market values).
+FEATURE_COLS = ['elo_diff', 'points_dif', 'mv_sum_diff']
 
 
 def _build_features(df):
     feat = pd.DataFrame(index=df.index)
-    feat['elo_diff']   = df['elo_diff']
-    feat['points_dif'] = df['points_dif']
+    feat['elo_diff']    = df['elo_diff']
+    feat['points_dif']  = df['points_dif']
+    feat['mv_sum_diff'] = (df['home_mv_top20_sum'] - df['away_mv_top20_sum']) / 1e6  # expressed in €M
     return feat[FEATURE_COLS]
 
 
