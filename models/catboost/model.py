@@ -22,6 +22,7 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 # Signed difference features — negated when teams are swapped during augmentation.
 DIFF_COLS = [
     'elo_diff',
+    'mv_sum_diff',         # Transfermarkt top-20 squad market value differential (home − away)
     'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
     'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
     'wc_games_diff',
@@ -42,7 +43,12 @@ ABS_COLS = [
     'abs_elo_diff',
 ]
 
-NUMERIC_COLS     = DIFF_COLS + ABS_COLS
+NUMERIC_COLS = DIFF_COLS + ABS_COLS
+
+# mv_sum_diff is NaN for matches without Transfermarkt coverage (~29% of training rows).
+# CatBoost handles NaN natively via border splits, so we keep those rows rather than
+# dropping them — only the non-MV features are required to be non-null.
+REQUIRED_NUMERIC_COLS = [c for c in NUMERIC_COLS if c != 'mv_sum_diff']
 CATEGORICAL_COLS = ['confederation_home', 'confederation_away']
 FEATURE_COLS     = NUMERIC_COLS + CATEGORICAL_COLS
 
@@ -55,7 +61,9 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['elo_diff']           = df['elo_diff']
+    feat['elo_diff']     = df['elo_diff']
+    feat['mv_sum_diff']  = df['home_mv_top20_sum'] - df['away_mv_top20_sum']   # NaN kept intentionally
+
     feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
     feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
 
@@ -157,8 +165,9 @@ class CatBoostPredictor:
             axis=1
         ).values
 
-        # Drop rows missing any numeric feature
-        numeric_mask = X[NUMERIC_COLS].notna().all(axis=1)
+        # Drop rows missing any required numeric feature.
+        # mv_sum_diff NaNs are kept — CatBoost handles them natively.
+        numeric_mask = X[REQUIRED_NUMERIC_COLS].notna().all(axis=1)
         X_clean = X[numeric_mask].reset_index(drop=True)
         y_clean = y[numeric_mask]
 
@@ -199,8 +208,9 @@ class CatBoostPredictor:
 
         X_fwd = _build_features(pd.DataFrame([row])).reset_index(drop=True)
 
-        # Fill NaNs — numeric with 0, categorical already filled in _build_features
-        for col in NUMERIC_COLS:
+        # Fill NaNs for required features with 0 (neutral / no-signal default).
+        # mv_sum_diff is left as NaN so CatBoost uses its trained NaN border split.
+        for col in REQUIRED_NUMERIC_COLS:
             X_fwd[col] = X_fwd[col].fillna(0)
 
         X_inv = _flip_features(X_fwd)
