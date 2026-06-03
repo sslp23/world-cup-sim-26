@@ -84,7 +84,8 @@ def run():
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
-    Y_MIN, Y_MAX = 0.13, 0.40
+    data_max = max(s.max() for s in series.values())
+    Y_MIN, Y_MAX = 0.13, round(data_max * 1.06, 2)
     ax.set_xlim(0, total + 55)
     ax.set_ylim(Y_MIN, Y_MAX)
 
