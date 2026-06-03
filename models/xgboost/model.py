@@ -27,6 +27,7 @@ OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 # Signed difference features — negated when teams are swapped during augmentation.
 DIFF_COLS = [
     'elo_diff',
+    'mv_sum_diff',         # Transfermarkt top-20 squad market value differential (home − away)
     'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
     'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
     'wc_games_diff',
@@ -47,6 +48,10 @@ ABS_COLS = ['abs_elo_diff']
 
 FEATURE_COLS = DIFF_COLS + ABS_COLS
 
+# mv_sum_diff is NaN for ~29% of training rows; XGBoost handles NaN natively via learned
+# default directions, so those rows are kept. Only non-MV features trigger the NaN mask.
+REQUIRED_DIFF_COLS = [c for c in DIFF_COLS if c != 'mv_sum_diff']
+
 
 def _build_features(df):
     """
@@ -55,7 +60,9 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['elo_diff']           = df['elo_diff']
+    feat['elo_diff']     = df['elo_diff']
+    feat['mv_sum_diff']  = df['home_mv_top20_sum'] - df['away_mv_top20_sum']   # NaN kept intentionally
+
     feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
     feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
 
@@ -156,7 +163,7 @@ class XGBoostPredictor:
             axis=1
         ).values
 
-        mask = X[DIFF_COLS].notna().all(axis=1)
+        mask = X[REQUIRED_DIFF_COLS].notna().all(axis=1)
         X_clean = X[mask].reset_index(drop=True)
         y_clean = y[mask]
 
@@ -193,7 +200,10 @@ class XGBoostPredictor:
         if not self._fitted:
             raise RuntimeError("Model not fitted. Call fit() first.")
 
-        X_fwd = _build_features(pd.DataFrame([row]))[FEATURE_COLS].fillna(0)
+        X_fwd = _build_features(pd.DataFrame([row]))[FEATURE_COLS]
+        for col in REQUIRED_DIFF_COLS + ABS_COLS:
+            X_fwd[col] = X_fwd[col].fillna(0)
+        # mv_sum_diff left as NaN — XGBoost uses its trained default direction
 
         X_inv = X_fwd.copy()
         for col in DIFF_COLS:

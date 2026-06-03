@@ -26,6 +26,8 @@ FEATURE_COLS = [
     'elo_diff',
     # Absolute quality gap — same regardless of attacker perspective
     'abs_elo_diff',
+    # Market value differential from attacker's perspective (attacker squad MV − defender squad MV)
+    'mv_sum_diff',
     # WC history — attacker advantage in tournament experience
     'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
     'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
@@ -39,6 +41,9 @@ FEATURE_COLS = [
     'def_gsw_ma5',
     'def_gd_ma20',
 ]
+
+# mv_sum_diff is NaN for ~29% of training rows; XGBoost handles NaN natively.
+REQUIRED_FEATURE_COLS = [c for c in FEATURE_COLS if c != 'mv_sum_diff']
 
 
 def _build_attacker_features(df, attacker='home'):
@@ -54,6 +59,7 @@ def _build_attacker_features(df, attacker='home'):
     if attacker == 'home':
         feat['elo_diff']           = df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
+        feat['mv_sum_diff']        = df['home_mv_top20_sum'] - df['away_mv_top20_sum']
         feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
         feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
         feat['wc_games_diff']      = df['home_wc_games'] - df['away_wc_games']
@@ -66,6 +72,7 @@ def _build_attacker_features(df, attacker='home'):
     else:  # away team attacks
         feat['elo_diff']           = -df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
+        feat['mv_sum_diff']        = df['away_mv_top20_sum'] - df['home_mv_top20_sum']
         feat['wc_best_round_diff'] = df['away_wc_best_round']     - df['home_wc_best_round']
         feat['wc_gpg_diff']        = df['away_wc_goals_per_game'] - df['home_wc_goals_per_game']
         feat['wc_games_diff']      = df['away_wc_games'] - df['home_wc_games']
@@ -138,7 +145,7 @@ class GoalRegressor:
         X_home['_y'] = y_home
         X_away['_y'] = y_away
         combined = pd.concat([X_home, X_away], ignore_index=True)
-        combined = combined.dropna()
+        combined = combined.dropna(subset=REQUIRED_FEATURE_COLS + ['_y'])
 
         X_clean = combined[FEATURE_COLS].values
         y_clean = combined['_y'].values
@@ -164,7 +171,9 @@ class GoalRegressor:
             raise RuntimeError("Model not fitted. Call fit() first.")
 
         X = _build_attacker_features(pd.DataFrame([row]), attacker=attacker)
-        X = X.fillna(0)
+        for col in REQUIRED_FEATURE_COLS:
+            X[col] = X[col].fillna(0)
+        # mv_sum_diff left as NaN — XGBoost uses its trained default direction
         lam = float(self.model.predict(X.values)[0])
         return max(lam, 0.01)  # clip to avoid degenerate Poisson
 
