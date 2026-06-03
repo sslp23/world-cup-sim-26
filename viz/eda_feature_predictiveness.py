@@ -5,10 +5,13 @@ Ranks all model candidate features by absolute Spearman correlation
 with match result (0=home win, 1=draw, 2=away win), highlighting
 which features were included in the final models vs excluded.
 
+Data source: concatenated past_wc files (2005-2022, no overlaps).
+
 Run from the project root:
     python -m viz.eda_feature_predictiveness
 """
 
+import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -26,8 +29,10 @@ C_SPINE    = '#CFD8DC'
 # Features to evaluate.  True = included in at least one final model.
 FEATURES = [
     ('elo_diff',                          True,  'ELO difference'),
+    ('mv_sum_diff',                       True,  'Market value sum diff  (top-20 squad)'),
     ('pi_diff',                           False, 'π-rating diff  (excluded — r=0.90 with ELO)'),
     ('points_dif',                        False, 'FIFA points diff  (excluded — r=0.92 with ELO)'),
+    ('mv_median_diff',                    False, 'Market value median diff  (excluded — r=0.91 with MV sum)'),
     ('home_wc_best_round',                True,  'Home WC best round'),
     ('away_wc_best_round',                True,  'Away WC best round'),
     ('home_wc_goals_per_game',            True,  'Home WC goals/game'),
@@ -46,7 +51,12 @@ FEATURES = [
 
 
 def run():
-    df = pd.read_csv('data/ranked_database_with_features.csv')
+    # Past-WC files cover 2005-2022 with no overlap — use them as training source
+    # so MV columns (only in past_wc files) are available alongside all other features.
+    files = sorted(glob.glob('data/past_wc/wc*/ranked_database_with_features.csv'))
+    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    df['mv_sum_diff']    = df['home_mv_top20_sum']    - df['away_mv_top20_sum']
+    df['mv_median_diff'] = df['home_mv_top20_median'] - df['away_mv_top20_median']
     df['date'] = pd.to_datetime(df['date'])
     train = (
         df[df['date'] < TRAIN_CUTOFF]
