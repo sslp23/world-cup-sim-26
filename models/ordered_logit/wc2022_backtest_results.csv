@@ -1,65 +1,65 @@
 date,home_team,away_team,home_score,away_score,actual,predicted,correct,p_home_win,p_draw,p_away_win,p_correct,log_loss,rps
-2022-11-20,Qatar,Ecuador,0,2,away_win,away_win,True,0.228,0.289,0.483,0.483,0.7278,0.1596
-2022-11-21,Senegal,Netherlands,0,2,away_win,away_win,True,0.13,0.224,0.646,0.646,0.4368,0.071
-2022-11-21,England,Iran,6,2,home_win,home_win,True,0.488,0.288,0.224,0.488,0.7177,0.1563
-2022-11-21,United States,Wales,1,1,draw,home_win,False,0.415,0.305,0.28,0.305,1.1878,0.1253
-2022-11-22,Argentina,Saudi Arabia,1,2,away_win,home_win,False,0.849,0.106,0.045,0.045,3.0951,0.8161
-2022-11-22,Mexico,Poland,0,0,draw,home_win,False,0.418,0.304,0.278,0.304,1.1896,0.1259
-2022-11-22,Denmark,Tunisia,0,0,draw,home_win,False,0.569,0.259,0.172,0.259,1.3496,0.1765
-2022-11-22,France,Australia,4,1,home_win,home_win,True,0.649,0.223,0.128,0.649,0.4319,0.0697
-2022-11-23,Belgium,Canada,1,0,home_win,home_win,True,0.61,0.242,0.149,0.61,0.4947,0.0872
-2022-11-23,Morocco,Croatia,0,0,draw,away_win,False,0.236,0.293,0.472,0.293,1.2292,0.1391
-2022-11-23,Spain,Costa Rica,7,0,home_win,home_win,True,0.634,0.23,0.136,0.634,0.4554,0.0761
-2022-11-23,Germany,Japan,1,2,away_win,home_win,False,0.496,0.286,0.219,0.219,1.5197,0.4279
-2022-11-24,Switzerland,Cameroon,1,0,home_win,home_win,True,0.643,0.226,0.131,0.643,0.4412,0.0722
-2022-11-24,Brazil,Serbia,2,0,home_win,home_win,True,0.718,0.186,0.096,0.718,0.3319,0.0445
-2022-11-24,Uruguay,South Korea,0,0,draw,home_win,False,0.498,0.285,0.217,0.285,1.2557,0.1476
-2022-11-24,Portugal,Ghana,3,2,home_win,home_win,True,0.763,0.16,0.077,0.763,0.2711,0.0312
-2022-11-25,Qatar,Senegal,1,3,away_win,away_win,True,0.271,0.303,0.427,0.427,0.8518,0.201
-2022-11-25,Netherlands,Ecuador,1,1,draw,home_win,False,0.537,0.272,0.192,0.272,1.3026,0.1623
-2022-11-25,Wales,Iran,0,2,away_win,away_win,True,0.335,0.311,0.354,0.354,1.0391,0.2651
-2022-11-25,England,United States,0,0,draw,home_win,False,0.525,0.276,0.199,0.276,1.2878,0.1578
-2022-11-26,France,Denmark,2,1,home_win,home_win,True,0.46,0.296,0.245,0.46,0.777,0.1758
-2022-11-26,Tunisia,Australia,0,1,away_win,home_win,False,0.387,0.309,0.304,0.304,1.1907,0.3173
-2022-11-26,Argentina,Mexico,2,0,home_win,home_win,True,0.638,0.228,0.134,0.638,0.4495,0.0745
-2022-11-26,Poland,Saudi Arabia,2,0,home_win,home_win,True,0.432,0.302,0.266,0.432,0.8391,0.1967
-2022-11-27,Japan,Costa Rica,0,1,away_win,home_win,False,0.46,0.296,0.244,0.244,1.4088,0.3912
-2022-11-27,Spain,Germany,1,1,draw,home_win,False,0.517,0.279,0.204,0.279,1.2776,0.1546
-2022-11-27,Belgium,Morocco,0,2,away_win,home_win,False,0.641,0.227,0.133,0.133,2.0211,0.5814
-2022-11-27,Croatia,Canada,4,1,home_win,home_win,True,0.456,0.297,0.247,0.456,0.7852,0.1786
-2022-11-28,Cameroon,Serbia,3,3,draw,away_win,False,0.152,0.244,0.604,0.244,1.4101,0.194
-2022-11-28,Brazil,Switzerland,1,0,home_win,home_win,True,0.686,0.204,0.11,0.686,0.3765,0.0553
-2022-11-28,South Korea,Ghana,2,3,away_win,home_win,False,0.598,0.247,0.155,0.155,1.8632,0.5356
-2022-11-28,Portugal,Uruguay,2,0,home_win,home_win,True,0.412,0.305,0.283,0.412,0.8875,0.2131
-2022-11-29,Wales,England,0,3,away_win,away_win,True,0.142,0.236,0.623,0.623,0.4737,0.0812
-2022-11-29,Iran,United States,0,1,away_win,away_win,True,0.329,0.311,0.361,0.361,1.0192,0.2582
-2022-11-29,Qatar,Netherlands,0,2,away_win,away_win,True,0.069,0.147,0.784,0.784,0.2429,0.0256
-2022-11-29,Ecuador,Senegal,1,2,away_win,home_win,False,0.445,0.299,0.256,0.256,1.3643,0.3763
-2022-11-30,Poland,Argentina,0,2,away_win,away_win,True,0.113,0.207,0.68,0.68,0.3862,0.0578
-2022-11-30,Saudi Arabia,Mexico,1,2,away_win,away_win,True,0.201,0.277,0.522,0.522,0.6508,0.1347
-2022-11-30,Australia,Denmark,1,0,home_win,away_win,False,0.201,0.277,0.521,0.201,1.6022,0.4547
-2022-11-30,Tunisia,France,1,0,home_win,away_win,False,0.1,0.192,0.708,0.1,2.3,0.6555
-2022-12-01,Japan,Spain,2,1,home_win,away_win,False,0.148,0.241,0.611,0.148,1.9093,0.5493
-2022-12-01,Costa Rica,Germany,2,4,away_win,away_win,True,0.218,0.286,0.496,0.496,0.7012,0.1509
-2022-12-01,Croatia,Belgium,0,0,draw,away_win,False,0.288,0.306,0.406,0.306,1.1832,0.1238
-2022-12-01,Canada,Morocco,1,2,away_win,away_win,True,0.237,0.293,0.47,0.47,0.7557,0.1688
-2022-12-02,Ghana,Uruguay,0,2,away_win,away_win,True,0.134,0.228,0.638,0.638,0.4501,0.0747
-2022-12-02,South Korea,Portugal,2,1,home_win,away_win,False,0.134,0.228,0.638,0.134,2.0111,0.5786
-2022-12-02,Cameroon,Brazil,1,0,home_win,away_win,False,0.031,0.077,0.892,0.031,3.4726,0.8675
-2022-12-02,Serbia,Switzerland,2,3,away_win,away_win,True,0.279,0.305,0.416,0.416,0.8766,0.2094
-2022-12-03,Netherlands,United States,3,1,home_win,home_win,True,0.519,0.278,0.203,0.519,0.6557,0.1362
-2022-12-03,Argentina,Australia,2,1,home_win,home_win,True,0.726,0.181,0.092,0.726,0.3197,0.0417
-2022-12-04,France,Poland,3,1,home_win,home_win,True,0.57,0.259,0.171,0.57,0.5626,0.1073
-2022-12-04,England,Senegal,3,0,home_win,home_win,True,0.562,0.262,0.176,0.562,0.5764,0.1114
-2022-12-05,Japan,Croatia,1,1,draw,away_win,False,0.275,0.304,0.422,0.304,1.1917,0.1266
-2022-12-05,Brazil,South Korea,4,1,home_win,home_win,True,0.728,0.18,0.092,0.728,0.3174,0.0412
-2022-12-06,Morocco,Spain,0,0,draw,away_win,False,0.226,0.289,0.485,0.289,1.2421,0.1432
-2022-12-06,Portugal,Switzerland,6,1,home_win,home_win,True,0.414,0.305,0.281,0.414,0.8829,0.2115
-2022-12-09,Croatia,Brazil,1,1,draw,away_win,False,0.14,0.234,0.626,0.234,1.4518,0.2056
-2022-12-09,Netherlands,Argentina,2,2,draw,away_win,False,0.25,0.297,0.453,0.297,1.2129,0.1337
-2022-12-10,England,France,1,2,away_win,away_win,True,0.341,0.311,0.348,0.348,1.0545,0.2704
-2022-12-10,Morocco,Portugal,1,0,home_win,away_win,False,0.216,0.285,0.499,0.216,1.5309,0.4316
-2022-12-13,Argentina,Croatia,3,0,home_win,home_win,True,0.563,0.261,0.175,0.563,0.5736,0.1106
-2022-12-14,France,Morocco,2,0,home_win,home_win,True,0.489,0.288,0.224,0.489,0.7163,0.1558
-2022-12-17,Croatia,Morocco,2,1,home_win,home_win,True,0.366,0.31,0.324,0.366,1.005,0.2533
-2022-12-18,Argentina,France,3,3,draw,home_win,False,0.428,0.303,0.27,0.303,1.1952,0.1278
+2022-11-20,Qatar,Ecuador,0,2,away_win,away_win,True,0.229,0.296,0.475,0.475,0.7444,0.1641
+2022-11-21,United States,Wales,1,1,draw,home_win,False,0.428,0.307,0.265,0.307,1.1812,0.1267
+2022-11-21,Senegal,Netherlands,0,2,away_win,away_win,True,0.117,0.216,0.668,0.668,0.4041,0.0621
+2022-11-21,England,Iran,6,2,home_win,home_win,True,0.584,0.256,0.16,0.584,0.5385,0.0995
+2022-11-22,Argentina,Saudi Arabia,1,2,away_win,home_win,False,0.851,0.105,0.043,0.043,3.1351,0.8196
+2022-11-22,Mexico,Poland,0,0,draw,home_win,False,0.396,0.312,0.292,0.312,1.1644,0.121
+2022-11-22,Denmark,Tunisia,0,0,draw,home_win,False,0.587,0.255,0.158,0.255,1.3671,0.1847
+2022-11-22,France,Australia,4,1,home_win,home_win,True,0.717,0.189,0.094,0.717,0.3329,0.0445
+2022-11-23,Belgium,Canada,1,0,home_win,home_win,True,0.62,0.239,0.14,0.62,0.4775,0.0819
+2022-11-23,Morocco,Croatia,0,0,draw,away_win,False,0.231,0.296,0.472,0.296,1.2162,0.1383
+2022-11-23,Germany,Japan,1,2,away_win,home_win,False,0.553,0.269,0.178,0.178,1.7263,0.4909
+2022-11-23,Spain,Costa Rica,7,0,home_win,home_win,True,0.706,0.195,0.099,0.706,0.348,0.0481
+2022-11-24,Switzerland,Cameroon,1,0,home_win,home_win,True,0.625,0.237,0.138,0.625,0.4707,0.08
+2022-11-24,Brazil,Serbia,2,0,home_win,home_win,True,0.744,0.173,0.083,0.744,0.2958,0.0362
+2022-11-24,Uruguay,South Korea,0,0,draw,home_win,False,0.511,0.284,0.204,0.284,1.2577,0.1516
+2022-11-24,Portugal,Ghana,3,2,home_win,home_win,True,0.79,0.145,0.065,0.79,0.2357,0.0242
+2022-11-25,Qatar,Senegal,1,3,away_win,away_win,True,0.247,0.302,0.451,0.451,0.7966,0.1814
+2022-11-25,Netherlands,Ecuador,1,1,draw,home_win,False,0.595,0.251,0.154,0.251,1.3819,0.189
+2022-11-25,Wales,Iran,0,2,away_win,away_win,True,0.342,0.316,0.342,0.342,1.0722,0.2748
+2022-11-25,England,United States,0,0,draw,home_win,False,0.59,0.253,0.156,0.253,1.3734,0.1865
+2022-11-26,France,Denmark,2,1,home_win,home_win,True,0.509,0.285,0.206,0.509,0.6745,0.1415
+2022-11-26,Poland,Saudi Arabia,2,0,home_win,home_win,True,0.452,0.302,0.247,0.452,0.7951,0.1809
+2022-11-26,Argentina,Mexico,2,0,home_win,home_win,True,0.653,0.223,0.124,0.653,0.4258,0.0677
+2022-11-26,Tunisia,Australia,0,1,away_win,home_win,False,0.385,0.313,0.302,0.302,1.1973,0.3175
+2022-11-27,Belgium,Morocco,0,2,away_win,home_win,False,0.625,0.237,0.138,0.138,1.9824,0.5671
+2022-11-27,Croatia,Canada,4,1,home_win,home_win,True,0.481,0.294,0.225,0.481,0.7311,0.1598
+2022-11-27,Japan,Costa Rica,0,1,away_win,home_win,False,0.461,0.299,0.24,0.24,1.429,0.3955
+2022-11-27,Spain,Germany,1,1,draw,home_win,False,0.51,0.285,0.205,0.285,1.2562,0.1511
+2022-11-28,Cameroon,Serbia,3,3,draw,away_win,False,0.152,0.25,0.598,0.25,1.3877,0.1906
+2022-11-28,Brazil,Switzerland,1,0,home_win,home_win,True,0.727,0.183,0.09,0.727,0.3183,0.0412
+2022-11-28,South Korea,Ghana,2,3,away_win,home_win,False,0.559,0.267,0.175,0.175,1.7453,0.4967
+2022-11-28,Portugal,Uruguay,2,0,home_win,home_win,True,0.465,0.298,0.236,0.465,0.765,0.1709
+2022-11-29,Wales,England,0,3,away_win,away_win,True,0.105,0.202,0.693,0.693,0.3666,0.0526
+2022-11-29,Iran,United States,0,1,away_win,away_win,True,0.301,0.313,0.386,0.386,0.9515,0.2336
+2022-11-29,Ecuador,Senegal,1,2,away_win,home_win,False,0.407,0.311,0.283,0.283,1.2633,0.3399
+2022-11-29,Qatar,Netherlands,0,2,away_win,away_win,True,0.059,0.134,0.807,0.807,0.2149,0.0204
+2022-11-30,Poland,Argentina,0,2,away_win,away_win,True,0.11,0.209,0.681,0.681,0.3842,0.057
+2022-11-30,Saudi Arabia,Mexico,1,2,away_win,away_win,True,0.199,0.281,0.52,0.52,0.6538,0.1349
+2022-11-30,Australia,Denmark,1,0,home_win,away_win,False,0.181,0.271,0.548,0.181,1.7097,0.4857
+2022-11-30,Tunisia,France,1,0,home_win,away_win,False,0.076,0.163,0.761,0.076,2.5729,0.7159
+2022-12-01,Japan,Spain,2,1,home_win,away_win,False,0.117,0.216,0.668,0.117,2.1488,0.6131
+2022-12-01,Costa Rica,Germany,2,4,away_win,away_win,True,0.166,0.26,0.574,0.574,0.5555,0.1046
+2022-12-01,Croatia,Belgium,0,0,draw,away_win,False,0.284,0.311,0.405,0.311,1.1686,0.1224
+2022-12-01,Canada,Morocco,1,2,away_win,away_win,True,0.233,0.297,0.47,0.47,0.754,0.1673
+2022-12-02,South Korea,Portugal,2,1,home_win,away_win,False,0.106,0.203,0.691,0.106,2.2457,0.6384
+2022-12-02,Ghana,Uruguay,0,2,away_win,away_win,True,0.135,0.234,0.631,0.631,0.4606,0.0772
+2022-12-02,Serbia,Switzerland,2,3,away_win,away_win,True,0.293,0.312,0.395,0.395,0.9289,0.2259
+2022-12-02,Cameroon,Brazil,1,0,home_win,away_win,False,0.027,0.07,0.903,0.027,3.6123,0.8811
+2022-12-03,Netherlands,United States,3,1,home_win,home_win,True,0.554,0.268,0.177,0.554,0.5899,0.115
+2022-12-03,Argentina,Australia,2,1,home_win,home_win,True,0.745,0.173,0.083,0.745,0.295,0.0361
+2022-12-04,France,Poland,3,1,home_win,home_win,True,0.63,0.235,0.135,0.63,0.4613,0.0774
+2022-12-04,England,Senegal,3,0,home_win,home_win,True,0.624,0.238,0.138,0.624,0.4715,0.0802
+2022-12-05,Japan,Croatia,1,1,draw,away_win,False,0.255,0.304,0.44,0.304,1.1897,0.1295
+2022-12-05,Brazil,South Korea,4,1,home_win,home_win,True,0.778,0.152,0.07,0.778,0.251,0.0271
+2022-12-06,Morocco,Spain,0,0,draw,away_win,False,0.181,0.271,0.548,0.271,1.3056,0.1665
+2022-12-06,Portugal,Switzerland,6,1,home_win,home_win,True,0.478,0.295,0.227,0.478,0.7382,0.1621
+2022-12-09,Croatia,Brazil,1,1,draw,away_win,False,0.115,0.214,0.671,0.214,1.541,0.2315
+2022-12-09,Netherlands,Argentina,2,2,draw,away_win,False,0.27,0.308,0.422,0.308,1.1779,0.1256
+2022-12-10,Morocco,Portugal,1,0,home_win,away_win,False,0.174,0.267,0.559,0.174,1.7464,0.4971
+2022-12-10,England,France,1,2,away_win,home_win,False,0.345,0.316,0.339,0.339,1.0823,0.2782
+2022-12-13,Argentina,Croatia,3,0,home_win,home_win,True,0.564,0.265,0.172,0.564,0.5729,0.1098
+2022-12-14,France,Morocco,2,0,home_win,home_win,True,0.558,0.267,0.175,0.558,0.5827,0.1128
+2022-12-17,Croatia,Morocco,2,1,home_win,home_win,True,0.375,0.314,0.31,0.375,0.9796,0.2431
+2022-12-18,Argentina,France,3,3,draw,home_win,False,0.371,0.315,0.314,0.315,1.1562,0.1182

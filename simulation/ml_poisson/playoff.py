@@ -198,9 +198,11 @@ def build_profiles():
                     'gsw_ma5':  row.get(f'{side}_goals_suffered_weighted_ma_5', 0),
                     'gd_ma20':  row.get(f'{side}_goal_diff_ma_20', 0),
                     'gd_ma5':   row.get(f'{side}_goal_diff_ma_5', 0),
-                    'wc_games':       row.get(f'{side}_wc_games', 0),
-                    'wc_best_round':  row.get(f'{side}_wc_best_round', 0),
-                    'wc_gpg':         row.get(f'{side}_wc_goals_per_game', 0),
+                    'wc_games':        row.get(f'{side}_wc_games', 0),
+                    'wc_best_round':   row.get(f'{side}_wc_best_round', 0),
+                    'wc_gpg':          row.get(f'{side}_wc_goals_per_game', 0),
+                    'mv_top20_sum':    row.get(f'{side}_mv_top20_sum', np.nan),
+                    'mv_top20_median': row.get(f'{side}_mv_top20_median', np.nan),
                 }
     return profiles
 
@@ -243,6 +245,10 @@ def predict_ko(model, team_a, team_b, profiles):
         'away_wc_best_round':                pb.get('wc_best_round', 0),
         'home_wc_goals_per_game':            pa.get('wc_gpg', 0),
         'away_wc_goals_per_game':            pb.get('wc_gpg', 0),
+        'home_mv_top20_sum':                 pa.get('mv_top20_sum', np.nan),
+        'away_mv_top20_sum':                 pb.get('mv_top20_sum', np.nan),
+        'home_mv_top20_median':              pa.get('mv_top20_median', np.nan),
+        'away_mv_top20_median':              pb.get('mv_top20_median', np.nan),
     })
 
     probs   = model.predict_proba_row(row)

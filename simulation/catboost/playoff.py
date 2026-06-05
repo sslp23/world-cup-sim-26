@@ -216,6 +216,8 @@ def build_profiles():
                     'wc_gcpg':         row.get(f'{side}_wc_goals_conceded_per_game', 0),
                     'avg_elo_10yr':    row.get(f'{side}_avg_elo_10yr', np.nan),
                     'avg_elo_20yr':    row.get(f'{side}_avg_elo_20yr', np.nan),
+                    'mv_top20_sum':    row.get(f'{side}_mv_top20_sum', np.nan),
+                    'mv_top20_median': row.get(f'{side}_mv_top20_median', np.nan),
                     'confederation':   row.get(f'confederation_{side}', 'Unknown'),
                 }
     return profiles
@@ -265,6 +267,10 @@ def predict_ko(model, team_a, team_b, profiles):
         'away_avg_elo_10yr':                 pb.get('avg_elo_10yr', np.nan),
         'home_avg_elo_20yr':                 pa.get('avg_elo_20yr', np.nan),
         'away_avg_elo_20yr':                 pb.get('avg_elo_20yr', np.nan),
+        'home_mv_top20_sum':                 pa.get('mv_top20_sum', np.nan),
+        'away_mv_top20_sum':                 pb.get('mv_top20_sum', np.nan),
+        'home_mv_top20_median':              pa.get('mv_top20_median', np.nan),
+        'away_mv_top20_median':              pb.get('mv_top20_median', np.nan),
         'confederation_home':                pa.get('confederation', 'Unknown'),
         'confederation_away':                pb.get('confederation', 'Unknown'),
     })

@@ -16,6 +16,7 @@ import kagglehub
 from .elo_calculator import compute_elo
 from .pi_ratings_calculator import compute_pi_ratings
 from .features_creator import FeaturesCreator
+from .market_values import merge_market_values
 
 
 def run():
@@ -55,6 +56,7 @@ def run():
 
     df_ranked = df.merge(rank, left_on=["date", "home_team"], right_on=["rank_date", "nation_full_name"]).drop(["rank_date", "nation_full_name"], axis=1)
     df_ranked = df_ranked.merge(rank, left_on=["date", "away_team"], right_on=["rank_date", "nation_full_name"], suffixes=("_home", "_away")).drop(["rank_date", "nation_full_name"], axis=1)
+    df_ranked = merge_market_values(df_ranked)
     df_ranked.to_csv("data/ranked_database.csv", index=False)
     print(f"Saved {len(df_ranked)} ranked matches to data/ranked_database.csv")
 

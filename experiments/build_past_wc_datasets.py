@@ -22,11 +22,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pandas as pd
 
 from data_pipeline.features_creator import FeaturesCreator
+from data_pipeline.market_values import merge_market_values
 
 # (year, wc_start, wc_end, training_start)
 # training_start = day after the previous WC final
 EDITIONS = [
-    (2006, '2006-06-09', '2006-07-09', '2002-07-01'),
+    (2006, '2006-06-09', '2006-07-09', '2005-01-07'),
     (2010, '2010-06-11', '2010-07-11', '2006-07-10'),
     (2014, '2014-06-12', '2014-07-13', '2010-07-12'),
     (2018, '2018-06-14', '2018-07-15', '2014-07-14'),
@@ -82,6 +83,8 @@ def build_dataset(train_start: str, wc_end: str) -> pd.DataFrame:
         right_on=['rank_date', 'nation_full_name'],
         suffixes=('_home', '_away')
     ).drop(['rank_date', 'nation_full_name'], axis=1)
+
+    ranked = merge_market_values(ranked)
 
     print(f'    Ranked matches after join: {len(ranked)}')
 

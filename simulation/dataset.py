@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pandas as pd
 
 from data_pipeline.features_creator import FeaturesCreator
+from data_pipeline.market_values import merge_market_values
 
 TRAIN_START = pd.Timestamp('2022-12-19')
 WC26_END    = pd.Timestamp('2026-06-27')
@@ -76,11 +77,12 @@ def build() -> pd.DataFrame:
                           suffixes=('_home', '_away')
                           ).drop(['rank_date', 'nation_full_name'], axis=1)
 
+    ranked = merge_market_values(ranked)
+
     wc26_start = pd.Timestamp('2026-06-11')
     n_train = (ranked['date'] < wc26_start).sum()
     n_wc26  = (ranked['date'] >= wc26_start).sum()
     print(f'  Ranked rows — training: {n_train}  WC26: {n_wc26}')
-
 
     tmp = 'data/_tmp_sim.csv'
     ranked.to_csv(tmp, index=False)
