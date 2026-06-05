@@ -25,16 +25,20 @@ from statsmodels.miscmodels.ordinal_model import OrderedModel
 OUTCOME_ORDER  = ['home_win', 'draw', 'away_win']
 
 # Rating-only features — the "fences" model
-# mv_sum_diff: NaN rows are dropped (statsmodels has no native NaN handling);
-# at prediction time fillna(0) is applied (neutral: equal market values).
-FEATURE_COLS = ['elo_diff', 'points_dif', 'mv_sum_diff']
+# Both MV features: NaN rows are dropped (statsmodels has no native NaN handling);
+# at prediction time fillna(0) applies (neutral: equal market values, log-ratio = 0).
+# mv_sum_diff scaled to €M for optimizer stability; mv_log_ratio is dimensionless.
+FEATURE_COLS = ['elo_diff', 'points_dif', 'mv_sum_diff', 'mv_log_ratio']
 
 
 def _build_features(df):
     feat = pd.DataFrame(index=df.index)
     feat['elo_diff']    = df['elo_diff']
     feat['points_dif']  = df['points_dif']
-    feat['mv_sum_diff'] = (df['home_mv_top20_sum'] - df['away_mv_top20_sum']) / 1e6  # expressed in €M
+    h_mv = df['home_mv_top20_sum']
+    a_mv = df['away_mv_top20_sum']
+    feat['mv_sum_diff']  = (h_mv - a_mv) / 1e6                 # expressed in €M
+    feat['mv_log_ratio'] = np.log((h_mv + 1) / (a_mv + 1))     # dimensionless
     return feat[FEATURE_COLS]
 
 

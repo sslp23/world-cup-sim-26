@@ -20,14 +20,17 @@ import numpy as np
 import pandas as pd
 from xgboost import XGBRegressor
 
+MV_COLS = ['mv_sum_diff', 'mv_log_ratio']   # both NaN together — excluded from required mask
+
 FEATURE_COLS = [
     # Rating from attacker's perspective (positive = attacker stronger)
     # points_dif excluded: Pearson r=0.92 with elo_diff, partial r=-0.05 — see eda/collinearity_points_elo.py
     'elo_diff',
     # Absolute quality gap — same regardless of attacker perspective
     'abs_elo_diff',
-    # Market value differential from attacker's perspective (attacker squad MV − defender squad MV)
+    # Market value from attacker's perspective (attacker MV − defender MV, absolute and log-ratio)
     'mv_sum_diff',
+    'mv_log_ratio',
     # WC history — attacker advantage in tournament experience
     'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
     'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
@@ -43,7 +46,7 @@ FEATURE_COLS = [
 ]
 
 # mv_sum_diff is NaN for ~29% of training rows; XGBoost handles NaN natively.
-REQUIRED_FEATURE_COLS = [c for c in FEATURE_COLS if c != 'mv_sum_diff']
+REQUIRED_FEATURE_COLS = [c for c in FEATURE_COLS if c not in MV_COLS]
 
 
 def _build_attacker_features(df, attacker='home'):
@@ -57,9 +60,12 @@ def _build_attacker_features(df, attacker='home'):
     feat = pd.DataFrame(index=df.index)
 
     if attacker == 'home':
+        h_mv = df['home_mv_top20_sum']
+        a_mv = df['away_mv_top20_sum']
         feat['elo_diff']           = df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
-        feat['mv_sum_diff']        = df['home_mv_top20_sum'] - df['away_mv_top20_sum']
+        feat['mv_sum_diff']        = h_mv - a_mv
+        feat['mv_log_ratio']       = np.log((h_mv + 1) / (a_mv + 1))
         feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
         feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
         feat['wc_games_diff']      = df['home_wc_games'] - df['away_wc_games']
@@ -70,9 +76,12 @@ def _build_attacker_features(df, attacker='home'):
         feat['def_gsw_ma5']        = df['away_goals_suffered_weighted_ma_5']
         feat['def_gd_ma20']        = df['away_goal_diff_ma_20']
     else:  # away team attacks
+        h_mv = df['home_mv_top20_sum']
+        a_mv = df['away_mv_top20_sum']
         feat['elo_diff']           = -df['elo_diff']
         feat['abs_elo_diff']       = df['elo_diff'].abs()
-        feat['mv_sum_diff']        = df['away_mv_top20_sum'] - df['home_mv_top20_sum']
+        feat['mv_sum_diff']        = a_mv - h_mv
+        feat['mv_log_ratio']       = np.log((a_mv + 1) / (h_mv + 1))
         feat['wc_best_round_diff'] = df['away_wc_best_round']     - df['home_wc_best_round']
         feat['wc_gpg_diff']        = df['away_wc_goals_per_game'] - df['home_wc_goals_per_game']
         feat['wc_games_diff']      = df['away_wc_games'] - df['home_wc_games']

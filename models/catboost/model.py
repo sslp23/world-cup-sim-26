@@ -20,9 +20,12 @@ OUTCOME_ORDER  = ['home_win', 'draw', 'away_win']
 OUTCOME_TO_INT = {'home_win': 0, 'draw': 1, 'away_win': 2}
 
 # Signed difference features — negated when teams are swapped during augmentation.
+MV_COLS = ['mv_sum_diff', 'mv_log_ratio']   # both NaN together — excluded from required mask
+
 DIFF_COLS = [
     'elo_diff',
-    'mv_sum_diff',         # Transfermarkt top-20 squad market value differential (home − away)
+    'mv_sum_diff',         # Transfermarkt top-20 squad MV differential, home − away (€)
+    'mv_log_ratio',        # log((home_mv+1)/(away_mv+1)) — relative squad strength ratio
     'wc_best_round_diff',  # best WC round ever reached (0=DNQ … 6=champion)
     'wc_gpg_diff',         # goals scored per game in WC history (0 if never qualified)
     'wc_games_diff',
@@ -48,7 +51,7 @@ NUMERIC_COLS = DIFF_COLS + ABS_COLS
 # mv_sum_diff is NaN for matches without Transfermarkt coverage (~29% of training rows).
 # CatBoost handles NaN natively via border splits, so we keep those rows rather than
 # dropping them — only the non-MV features are required to be non-null.
-REQUIRED_NUMERIC_COLS = [c for c in NUMERIC_COLS if c != 'mv_sum_diff']
+REQUIRED_NUMERIC_COLS = [c for c in NUMERIC_COLS if c not in MV_COLS]
 CATEGORICAL_COLS = ['confederation_home', 'confederation_away']
 FEATURE_COLS     = NUMERIC_COLS + CATEGORICAL_COLS
 
@@ -61,8 +64,11 @@ def _build_features(df):
     """
     feat = pd.DataFrame(index=df.index)
 
-    feat['elo_diff']     = df['elo_diff']
-    feat['mv_sum_diff']  = df['home_mv_top20_sum'] - df['away_mv_top20_sum']   # NaN kept intentionally
+    feat['elo_diff']      = df['elo_diff']
+    h_mv = df['home_mv_top20_sum']
+    a_mv = df['away_mv_top20_sum']
+    feat['mv_sum_diff']  = h_mv - a_mv                              # NaN kept intentionally
+    feat['mv_log_ratio'] = np.log((h_mv + 1) / (a_mv + 1))         # NaN kept intentionally
 
     feat['wc_best_round_diff'] = df['home_wc_best_round']     - df['away_wc_best_round']
     feat['wc_gpg_diff']        = df['home_wc_goals_per_game'] - df['away_wc_goals_per_game']
