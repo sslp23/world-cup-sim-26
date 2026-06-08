@@ -177,8 +177,8 @@ def _precompute_ko_probs(model, profiles):
         p     = model.predict_proba_row(row)
         p_hw, p_d, p_aw = p['home_win'], p['draw'], p['away_win']
         total   = p_hw + p_aw or 1e-9
-        ko[(ta, tb)] = float(p_hw + p_d * p_hw / total)
-        ko[(tb, ta)] = float(p_aw + p_d * p_aw / total)
+        ko[(ta, tb)] = float(p_hw + p_d * 0.5)
+        ko[(tb, ta)] = float(p_aw + p_d * 0.5)
     return ko
 
 

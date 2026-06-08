@@ -23,12 +23,13 @@ from catboost import Pool
 
 from models.catboost.model import CatBoostPredictor, _build_features, FEATURE_COLS as CB_COLS
 from simulation.dataset    import build as build_dataset
+from simulation.catboost.playoff import build_profiles
 from config import CB_DRAW_WEIGHT
 
 # ── Match to explain ──────────────────────────────────────────────────────────
-HOME_TEAM  = 'Ghana'
-AWAY_TEAM  = 'Panama'
-MATCH_DATE = '2026-06-17'    # set to None if not needed for disambiguation
+HOME_TEAM  = 'Spain'
+AWAY_TEAM  = 'France'
+MATCH_DATE = None    # set to a date string to disambiguate group stage matches
 # ─────────────────────────────────────────────────────────────────────────────
 
 WC26_START = pd.Timestamp('2026-06-11')
@@ -85,14 +86,57 @@ def run():
         (full_df['date'] <= WC26_END)
     ].copy().reset_index(drop=True)
 
-    # Find match
+    # Find match in WC26 group stage schedule
     mask = (wc26_df['home_team'] == HOME_TEAM) & (wc26_df['away_team'] == AWAY_TEAM)
     if MATCH_DATE:
         mask &= wc26_df['date'] == pd.Timestamp(MATCH_DATE)
-    if not mask.any():
-        print(f"Match not found: {HOME_TEAM} vs {AWAY_TEAM}")
-        return
-    row = wc26_df[mask].iloc[0]
+
+    if mask.any():
+        row = wc26_df[mask].iloc[0]
+    else:
+        # Match not in group stage — build synthetic row from team profiles
+        # (useful for hypothetical knockout matchups)
+        print(f"  '{HOME_TEAM} vs {AWAY_TEAM}' not in WC26 schedule — "
+              f"building synthetic row from team profiles.")
+        profiles = build_profiles()
+        pa = profiles.get(HOME_TEAM, {})
+        pb = profiles.get(AWAY_TEAM, {})
+        if not pa or not pb:
+            print(f"  Profile not found for one or both teams. Check team names.")
+            return
+        row = pd.Series({
+            'home_team': HOME_TEAM, 'away_team': AWAY_TEAM,
+            'date': pd.Timestamp('2026-07-01'),
+            'elo_diff':                           pa.get('elo', 1500) - pb.get('elo', 1500),
+            'home_elo':                           pa.get('elo', 1500),
+            'away_elo':                           pb.get('elo', 1500),
+            'home_mv_top20_sum':                  pa.get('mv_top20_sum', np.nan),
+            'away_mv_top20_sum':                  pb.get('mv_top20_sum', np.nan),
+            'home_wc_best_round':                 pa.get('wc_best_round', 0),
+            'away_wc_best_round':                 pb.get('wc_best_round', 0),
+            'home_wc_goals_per_game':             pa.get('wc_gpg', 0),
+            'away_wc_goals_per_game':             pb.get('wc_gpg', 0),
+            'home_wc_games':                      pa.get('wc_games', 0),
+            'away_wc_games':                      pb.get('wc_games', 0),
+            'home_points_weighted_ma_20':         pa.get('pww_ma20', 0),
+            'away_points_weighted_ma_20':         pb.get('pww_ma20', 0),
+            'home_points_weighted_ma_5':          pa.get('pww_ma5', 0),
+            'away_points_weighted_ma_5':          pb.get('pww_ma5', 0),
+            'home_goals_weighted_ma_20':          pa.get('gw_ma20', 0),
+            'away_goals_weighted_ma_20':          pb.get('gw_ma20', 0),
+            'home_goals_weighted_ma_5':           pa.get('gw_ma5', 0),
+            'away_goals_weighted_ma_5':           pb.get('gw_ma5', 0),
+            'home_goals_suffered_weighted_ma_20': pa.get('gsw_ma20', 0),
+            'away_goals_suffered_weighted_ma_20': pb.get('gsw_ma20', 0),
+            'home_goals_suffered_weighted_ma_5':  pa.get('gsw_ma5', 0),
+            'away_goals_suffered_weighted_ma_5':  pb.get('gsw_ma5', 0),
+            'home_goal_diff_ma_20':               pa.get('gd_ma20', 0),
+            'away_goal_diff_ma_20':               pb.get('gd_ma20', 0),
+            'home_goal_diff_ma_5':                pa.get('gd_ma5', 0),
+            'away_goal_diff_ma_5':                pb.get('gd_ma5', 0),
+            'confederation_home':                 pa.get('confederation', 'Unknown'),
+            'confederation_away':                 pb.get('confederation', 'Unknown'),
+        })
 
     print(f"\n{'#'*70}")
     print(f"  SHAP EXPLANATION: {HOME_TEAM} vs {AWAY_TEAM}  ({row['date'].date()})")

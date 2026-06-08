@@ -175,9 +175,8 @@ def predict_ko(model, team_a, team_b, profiles):
     probs = model.predict_proba_row(row)
     p_hw, p_d, p_aw = probs['home_win'], probs['draw'], probs['away_win']
 
-    total   = p_hw + p_aw
-    p_a_win = p_hw + p_d * (p_hw / total if total > 0 else 0.5)
-    p_b_win = p_aw + p_d * (p_aw / total if total > 0 else 0.5)
+    p_a_win = p_hw + p_d * 0.5
+    p_b_win = p_aw + p_d * 0.5
 
     winner = team_a if p_a_win >= p_b_win else team_b
     return winner, round(p_a_win, 3), round(p_b_win, 3)

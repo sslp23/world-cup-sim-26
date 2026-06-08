@@ -280,9 +280,10 @@ def predict_ko(model, team_a, team_b, profiles):
     p_d     = probs['draw']
     p_aw    = probs['away_win']
 
-    total   = p_hw + p_aw
-    p_a_win = p_hw + p_d * (p_hw / total if total > 0 else 0.5)
-    p_b_win = p_aw + p_d * (p_aw / total if total > 0 else 0.5)
+    # Draw split 50/50: penalties at neutral venues are near-random,
+    # so the draw probability is shared equally between both teams.
+    p_a_win = p_hw + p_d * 0.5
+    p_b_win = p_aw + p_d * 0.5
 
     winner = team_a if p_a_win >= p_b_win else team_b
     return winner, round(p_a_win, 3), round(p_b_win, 3), round(p_d, 3)
