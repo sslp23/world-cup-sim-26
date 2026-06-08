@@ -38,10 +38,10 @@ Class weights are set inversely proportional to class frequency in the augmented
 | `draw_weight` | Draw class weight | Effect |
 | --- | --- | --- |
 | 0.0 | 0.00 | Never predicts draws |
-| 0.65 | 0.95 | **Selected** — best accuracy trade-off |
+| 0.6 | 0.88 | **Selected** — best accuracy trade-off |
 | 1.0 | 1.47 | Full inverse-frequency compensation — over-predicts draws |
 
-`draw_weight = 0.65` was tuned on the WC 2022 backtest.
+`draw_weight = 0.6` was tuned on the WC 2022 backtest.
 
 ## Feature Set
 
@@ -50,13 +50,14 @@ See [features.md](../../features.md#model-feature-selection) for the full descri
 | Group | Features |
 | --- | --- |
 | Ratings | `elo_diff`, `abs_elo_diff` |
-| WC experience | `wc_games_diff` |
+| Market value | `mv_sum_diff`, `mv_log_ratio` |
+| WC history | `wc_games_diff`, `wc_best_round_diff`, `wc_gpg_diff` |
 | Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
 | Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |
 | Weighted goals suffered | `gsw_ma20_diff`, `gsw_ma5_diff` |
 | Goal difference | `gd_ma20_diff`, `gd_ma5_diff` |
 
-`points_dif`, `abs_points_dif`, and `pi_diff` are excluded — see [`eda/README.md`](../../eda/README.md) for collinearity analysis. `neutral` is excluded — augmentation and symmetrized inference handle venue invariance.
+`points_dif` and `pi_diff` are excluded — see [`eda/README.md`](../../eda/README.md) for collinearity analysis. `neutral` is excluded — augmentation and symmetrized inference handle venue invariance.
 
 ## Files
 
@@ -71,4 +72,4 @@ See [features.md](../../features.md#model-feature-selection) for the full descri
 
 Accuracy: **54.7% (35/64)** — Log-Loss: **1.069** — RPS: **0.218**
 
-See [models/README.md](../README.md) for comparison with Dixon-Coles.
+See [models/README.md](../README.md) for comparison with other models.

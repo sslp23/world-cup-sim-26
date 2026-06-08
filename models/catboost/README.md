@@ -15,7 +15,8 @@ Identical to XGBoost in structure — see [`xgboost/README.md`](../xgboost/READM
 | Group | Features |
 | --- | --- |
 | Ratings | `elo_diff`, `abs_elo_diff` |
-| WC experience | `wc_games_diff` |
+| Market value | `mv_sum_diff`, `mv_log_ratio` |
+| WC history | `wc_games_diff`, `wc_best_round_diff`, `wc_gpg_diff` |
 | Weighted points won | `pww_ma20_diff`, `pww_ma5_diff` |
 | Weighted goals scored | `gw_ma20_diff`, `gw_ma5_diff` |
 | Weighted goals suffered | `gsw_ma20_diff`, `gsw_ma5_diff` |
@@ -26,7 +27,7 @@ Identical to XGBoost in structure — see [`xgboost/README.md`](../xgboost/READM
 
 ## Tuned Parameters
 
-- `draw_weight = 0.66` (simulation model — tuned for best cross-WC RPS)
+- `draw_weight = 0.8` (tuned on WC 2022)
 - `iterations = 500`, `learning_rate = 0.05`, `depth = 6`
 
 ## Files
@@ -42,4 +43,4 @@ Identical to XGBoost in structure — see [`xgboost/README.md`](../xgboost/READM
 
 Accuracy: **53.1% (34/64)** — Log-Loss: **1.050** — RPS: **0.214**
 
-See [models/README.md](../README.md) for full comparison.
+See [models/README.md](../README.md) for comparison with other models.

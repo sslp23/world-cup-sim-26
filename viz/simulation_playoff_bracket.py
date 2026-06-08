@@ -23,44 +23,44 @@ OUTPUT_PATH = 'viz/output/simulation_playoff_bracket.png'
 # Each tuple: (team_a, team_b, p_a, p_b, winner)
 ROUNDS = [
     # Round of 32 (indices 0-15) — pairs whose winners meet in the R16 match above
-    ('Germany',     'Scotland',       0.758, 0.242, 'Germany'),
-    ('France',      'Sweden',         0.876, 0.124, 'France'),
-    ('South Korea', 'Canada',         0.460, 0.540, 'Canada'),
-    ('Netherlands', 'Morocco',        0.692, 0.308, 'Netherlands'),
-    ('Colombia',    'Croatia',        0.462, 0.538, 'Croatia'),
-    ('Spain',       'Algeria',        0.886, 0.114, 'Spain'),
-    ('Paraguay',    'Austria',        0.585, 0.415, 'Paraguay'),
-    ('Belgium',     'Czech Republic', 0.747, 0.253, 'Belgium'),
-    ('Brazil',      'Japan',          0.725, 0.275, 'Brazil'),
-    ('Ecuador',     'Norway',         0.498, 0.502, 'Norway'),
-    ('Mexico',      'Ivory Coast',    0.665, 0.335, 'Mexico'),
-    ('England',     'Senegal',        0.844, 0.156, 'England'),
-    ('Argentina',   'Uruguay',        0.695, 0.305, 'Argentina'),
-    ('Turkey',      'Iran',           0.662, 0.338, 'Turkey'),
-    ('Switzerland', 'Egypt',          0.762, 0.238, 'Switzerland'),
-    ('Portugal',    'Panama',         0.825, 0.175, 'Portugal'),
+    ('Ecuador',       'United States', 0.654, 0.346, 'Ecuador'),
+    ('France',        'Sweden',        0.736, 0.264, 'France'),
+    ('Czech Republic','Canada',        0.428, 0.572, 'Canada'),
+    ('Netherlands',   'Morocco',       0.543, 0.457, 'Netherlands'),
+    ('Colombia',      'Croatia',       0.503, 0.497, 'Colombia'),
+    ('Spain',         'Austria',       0.756, 0.244, 'Spain'),
+    ('Turkey',        'Algeria',       0.603, 0.397, 'Turkey'),
+    ('Belgium',       'South Korea',   0.734, 0.266, 'Belgium'),
+    ('Brazil',        'Japan',         0.614, 0.386, 'Brazil'),
+    ('Germany',       'Senegal',       0.598, 0.402, 'Germany'),
+    ('Mexico',        'Scotland',      0.602, 0.398, 'Mexico'),
+    ('England',       'Norway',        0.627, 0.373, 'England'),
+    ('Argentina',     'Uruguay',       0.612, 0.388, 'Argentina'),
+    ('Paraguay',      'Iran',          0.618, 0.382, 'Paraguay'),
+    ('Switzerland',   'Egypt',         0.581, 0.419, 'Switzerland'),
+    ('Portugal',      'Ivory Coast',   0.714, 0.286, 'Portugal'),
     # Round of 16 (indices 16-23)
-    ('Germany',     'France',         0.300, 0.700, 'France'),
-    ('Canada',      'Netherlands',    0.167, 0.833, 'Netherlands'),
-    ('Croatia',     'Spain',          0.151, 0.849, 'Spain'),
-    ('Paraguay',    'Belgium',        0.297, 0.703, 'Belgium'),
-    ('Brazil',      'Norway',         0.584, 0.416, 'Brazil'),
-    ('Mexico',      'England',        0.182, 0.818, 'England'),
-    ('Argentina',   'Turkey',         0.787, 0.213, 'Argentina'),
-    ('Switzerland', 'Portugal',       0.319, 0.681, 'Portugal'),
+    ('Ecuador',       'France',        0.412, 0.588, 'France'),
+    ('Canada',        'Netherlands',   0.273, 0.727, 'Netherlands'),
+    ('Colombia',      'Spain',         0.385, 0.615, 'Spain'),
+    ('Turkey',        'Belgium',       0.366, 0.634, 'Belgium'),
+    ('Brazil',        'Germany',       0.583, 0.417, 'Brazil'),
+    ('Mexico',        'England',       0.278, 0.722, 'England'),
+    ('Argentina',     'Paraguay',      0.691, 0.309, 'Argentina'),
+    ('Switzerland',   'Portugal',      0.334, 0.666, 'Portugal'),
     # Quarter-finals (indices 24-27)
-    ('France',      'Netherlands',    0.631, 0.369, 'France'),
-    ('Spain',       'Belgium',        0.841, 0.159, 'Spain'),
-    ('Brazil',      'England',        0.446, 0.554, 'England'),
-    ('Argentina',   'Portugal',       0.687, 0.313, 'Argentina'),
+    ('France',        'Netherlands',   0.576, 0.424, 'France'),
+    ('Spain',         'Belgium',       0.700, 0.300, 'Spain'),
+    ('Brazil',        'England',       0.485, 0.515, 'England'),
+    ('Argentina',     'Portugal',      0.565, 0.435, 'Argentina'),
     # Semi-finals (indices 28-29)
-    ('France',      'Spain',          0.332, 0.668, 'Spain'),
-    ('England',     'Argentina',      0.372, 0.628, 'Argentina'),
+    ('France',        'Spain',         0.403, 0.597, 'Spain'),
+    ('England',       'Argentina',     0.464, 0.536, 'Argentina'),
     # Final (index 30)
-    ('Spain',       'Argentina',      0.648, 0.352, 'Spain'),
+    ('Spain',         'Argentina',     0.584, 0.416, 'Spain'),
 ]
 
-THIRD_PLACE = ('France', 'England', 0.620, 0.380, 'France')
+THIRD_PLACE = ('France', 'England', 0.467, 0.533, 'England')
 CHAMPION    = 'Spain'
 
 ROUND_NAMES = ['Round of 32', 'Round of 16', 'Quarter-Final', 'Semi-Final', 'Final']
