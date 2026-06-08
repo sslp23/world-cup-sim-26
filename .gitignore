@@ -1,4 +1,5 @@
 data/
+eda/
 __pycache__/
 test.py
 catboost_info/
