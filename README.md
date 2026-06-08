@@ -23,6 +23,7 @@ The project follows a three-stage workflow:
 
 - **FIFA Rankings**: Scraped from Transfermarkt via the [fifa-ranking-scraper](https://github.com/sslp23/fifa-ranking-scraper), which generates `data/resulting_data.csv`.
 - **International Match Results**: Full history of international football results from 1872 to present, downloaded from [Kaggle](https://www.kaggle.com/datasets/martj42/international-football-results-from-1872-to-2017) via `get_data.py`.
+- **Transfermarkt Market Values**: Top-20 squad market value sum and median per team per match window, sourced from Transfermarkt and merged via `data_pipeline/market_values.py`. Used as features `mv_sum_diff` and `mv_log_ratio`.
 
 ## Pipeline
 
@@ -82,15 +83,15 @@ Implements the [eloratings.net](https://www.eloratings.net) formula:
 
 Averaged across WC 2006, 2010, 2014, 2018, 2022 (64 matches each):
 
-| Model | Avg Accuracy | Avg RPS | Avg Log-Loss |
+| Model | Avg Accuracy | Avg RPS ↓ | Avg Log-Loss ↓ |
 | --- | --- | --- | --- |
-| Ordered Logit | **57.8%** | 0.1995 | 0.9714 |
-| XGBoost | 57.2% | 0.1977 | 0.9959 |
-| Ensemble (XGB + CB + MLP) | 56.9% | 0.1918 | 0.9564 |
-| **CatBoost** | 56.2% | **0.1914** | **0.9520** |
-| ML-Poisson | 55.9% | 0.1925 | 0.9574 |
+| Ordered Logit | **58.1%** | 0.1943 | 0.9558 |
+| CatBoost | 57.2% | 0.1923 | 0.9560 |
+| Ensemble (XGB + CB + MLP) | 56.6% | **0.1922** | **0.9541** |
+| XGBoost | 56.6% | 0.1989 | 0.9883 |
+| ML-Poisson | 55.9% | 0.1930 | 0.9610 |
 
-CatBoost leads on both RPS and Log-Loss (best probability calibration); Ordered Logit leads on accuracy.
+Ordered Logit leads on accuracy; Ensemble leads on RPS and Log-Loss. CatBoost is the best single model on probabilistic metrics (0.001 behind Ensemble on RPS) and is used for the WC 2026 simulation.
 
 See [`backtest/output/`](backtest/output/) for per-match Excel results per model and WC edition.
 
@@ -125,18 +126,17 @@ wc_26_ml/
 │   └── output/              # Per-match Excel results (one file per model)
 ├── simulation/
 │   ├── dataset.py           # Builds post-WC22 training set + WC26 group stage rows (shared)
-│   ├── catboost/            # CatBoost simulation (run.py → group_tables.py → playoff.py)
+│   ├── third_place_combinations.csv  # All C(12,8)=495 bracket allocation combinations
+│   ├── catboost/            # CatBoost simulation (primary)
 │   │   ├── run.py           # Entry point: python -m simulation.catboost.run
 │   │   ├── predict.py       # Group stage predictions
 │   │   ├── group_tables.py  # Group tabs + best 3rd-place ranking
 │   │   ├── playoff.py       # Knockout bracket simulation
 │   │   └── explain.py       # SHAP explanation for a single match
-│   ├── ml_poisson/          # ML-Poisson simulation (same structure, uses MLPoissonModel)
-│   │   ├── run.py           # Entry point: python -m simulation.ml_poisson.run
-│   │   ├── predict.py       # Group stage predictions
-│   │   ├── group_tables.py  # Group tabs + best 3rd-place ranking
-│   │   └── playoff.py       # Knockout bracket simulation
-│   └── output/              # wc_26_catboost.xlsx / wc_26_ml_poisson.xlsx
+│   ├── ml_poisson/          # ML-Poisson simulation (same structure)
+│   ├── monte_carlo/         # Monte Carlo title probability simulation
+│   │   └── run.py           # Entry point: python -m simulation.monte_carlo.run [--n 10000]
+│   └── output/              # wc_26_catboost.xlsx / wc_26_ml_poisson.xlsx / wc_26_mc_title_probs.csv
 ├── experiments/             # Ad-hoc tests (training window size, dataset builder)
 └── data/
     ├── international_results.csv
