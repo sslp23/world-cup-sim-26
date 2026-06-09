@@ -47,8 +47,6 @@ This executes the following steps in order:
 
 See [features.md](features.md) for full documentation of all engineered features and the selected model feature set.
 
-See [eda/README.md](eda/README.md) for the exploratory data analysis — feature predictiveness, multicollinearity findings, and the rationale behind feature selection.
-
 ### Summary
 
 #### Static (per match)
