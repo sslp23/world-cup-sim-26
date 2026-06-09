@@ -172,24 +172,24 @@ def run():
         bg_color = cmap(0.95 - d * 0.17)
         txt_col  = 'white' if d <= 2 else '#1A1A1A'
         # North label (above topmost node of ring)
-        ax.text(0, depth_max_y[d] + 85, rname,
+        ax.text(0, depth_max_y[d] + 160, rname,
                 ha='center', va='bottom', fontsize=8.5, fontweight='bold',
                 color=txt_col,
                 bbox=dict(boxstyle='round,pad=0.35', fc=bg_color,
                           ec='none', alpha=0.92))
         # South label (below bottommost node of ring)
-        ax.text(0, depth_min_y[d] - 85, rname,
+        ax.text(0, depth_min_y[d] - 160, rname,
                 ha='center', va='top', fontsize=8.5, fontweight='bold',
                 color=txt_col,
                 bbox=dict(boxstyle='round,pad=0.35', fc=bg_color,
                           ec='none', alpha=0.92))
 
     # ── Final label + champion banner ────────────────────────────────────────
-    ax.text(cx, cy + 38, 'Final',
+    ax.text(cx, cy + 100, 'Final',
             ha='center', va='bottom', fontsize=8.5, fontweight='bold',
             color='white',
             bbox=dict(boxstyle='round,pad=0.3', fc=cmap(0.95), ec='none', alpha=0.90))
-    ax.text(cx, cy - 42, f'★  CHAMPION:  {CHAMPION}',
+    ax.text(cx, cy - 115, f'★  CHAMPION:  {CHAMPION}',
             ha='center', va='top', fontsize=11, fontweight='bold',
             color='#1B5E20',
             bbox=dict(boxstyle='round,pad=0.45', fc='#F9FBE7',

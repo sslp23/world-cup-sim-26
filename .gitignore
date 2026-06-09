@@ -3,6 +3,5 @@ eda/
 __pycache__/
 test.py
 catboost_info/
-*.xlsx
 backtest/output/run.log
 pipeline.py
