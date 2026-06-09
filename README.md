@@ -107,9 +107,6 @@ wc_26_ml/
 │   ├── pi_ratings_calculator.py  # Computes pi-ratings (Constantinou & Fenton)
 │   ├── features_creator.py  # Engineers all model features
 │   └── validate_features.py # Sanity-checks computed features against raw data
-├── eda/                     # Exploratory data analysis
-│   ├── README.md            # EDA findings and feature selection rationale
-│   └── feature_analysis.py  # Feature predictiveness and multicollinearity analysis
 ├── models/                  # Stage 2: model development and WC 2022 tuning
 │   ├── README.md            # Model comparison and WC 2022 backtest results
 │   ├── dixon_coles/         # Dixon-Coles Poisson model
